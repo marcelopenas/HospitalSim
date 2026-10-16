@@ -1,26 +1,23 @@
 # Hospital
 
-The Hospital model represents a healthcare facility where patients receive medical care. It contains information about the hospital's name, location, departments, and other relevant details necessary for managing hospital operations.
+A hospital is the parent facility for staff and patients. Defined in `app/models/hospital.py`; managed through `/hospitals`.
 
-## Attributes
+| Field | Type | Required on create | Validation |
+| --- | --- | --- | --- |
+| `id` | integer | Generated | Primary key, read-only in API payloads |
+| `name` | string | Yes | 1–200 characters; unique |
+| `location` | string | Yes | 1–500 characters; unique |
 
-| Attribute | Type    | Description                          |
-| --------- | ------- | ------------------------------------ |
-| id        | Integer | Unique identifier for the hospital   |
-| name      | String  | The name of the hospital             |
-| location  | String  | The physical address of the hospital |
+Location is free text; it is not parsed or verified as a postal address. Name and location each have separate database uniqueness constraints and router-level conflict checks.
 
 ## Relationships
 
-The Hospital model has the following relationships:
+A hospital has many staff and patients. Each of those records references one hospital through `hospital_id`. Hospital responses contain only `id`, `name`, and `location`, without embedded relationship arrays.
 
-- The Hospital model has a one-to-many relationship with the Staff model, where each hospital can have multiple staff members.
-- The Hospital model has a one-to-many relationship with the Patient model, where each hospital can have multiple patients.
+## Example
 
-## Restrictions
+```json
+{"name":"Riverside Medical Center","location":"Boston, Massachusetts"}
+```
 
-The Hospital model has the following restrictions:
-
-- The `name` attribute is required and must be unique across all hospitals in the system.
-- The `location` attribute is required and must be a valid address and unique across all hospitals in the system.
-- The `id` attribute is automatically generated and cannot be modified.
+PATCH may supply either name or location. Omit unchanged fields and do not set required values to null. A missing item returns 404 and a detected duplicate returns 409. Remove dependent staff and patients before deleting a hospital; deletion behavior is not normalized into a complete API-level integrity-error contract.
