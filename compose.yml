@@ -28,7 +28,7 @@ services:
 
   frontend:
     build:
-      context: ./web/hespitalsim
+      context: ./web
       dockerfile: Dockerfile
     ports:
       - "3000:80"
