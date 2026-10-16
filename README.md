@@ -26,23 +26,55 @@ The code for the frontend can be found in the `web` directory.
 
 ## Running the project
 
-### API
+The recommended way to run the project is via docker compose, which will set up the necessary environment and start both the backend and frontend services.
+
+To start the project, run the following command in the project root directory:
 
 ```bash
 bash run.sh
 ```
 
-### Website
+This will generate the necessary files, environment variables, build the docker images, and start the services.
+
+### API
+
+The API can be started by running the `run.sh` script in the project root directory. This script will set up the necessary environment and start the backend service via the docker compose.
 
 ```bash
-cd frontend
+bash run.sh
+```
+
+#### API Development
+
+To run the backend in development mode, you can use the following command:
+
+```bash
+fastapi dev
+```
+
+!!! NOTE
+    Make sure to have the dependencies installed in your local environment before running the command above.
+    Also make sure to have `DATABASE_URL` environment variable set to the database URL you want to use for development.
+
+### Website
+
+The frontend is atuomatically started when you run the docker compose, and it can be accessed at [http://localhost:3000](http://localhost:3000).
+
+#### Website Development
+
+To run the frontend in development mode, navigate to the `web` directory and install the dependencies:
+
+```bash
+cd web
 npm install
-npm start
+npm run dev
 ```
 
 ## Documentation
 
 The documentation for the project can be found at [https://hospital-sim.readthedocs.io](https://hospital-sim.readthedocs.io).
+
+### Local Documentation
 
 The project uses mkdocs for documentation. To view the documentation via the local development server, run the following command:
 
