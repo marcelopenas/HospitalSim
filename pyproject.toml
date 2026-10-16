@@ -13,7 +13,7 @@ dependencies = [
     "mkdocs-badges>=0.6.0",
     "mkdocs-material>=9.7.7",
     "mkdocs-toggle-sidebar-plugin>=0.1.2",
-    "pymysql>=1.1.1",
+    "pymysql[rsa]>=1.1.1",
     "sqlmodel>=0.0.48",
 ]
 [tool.ruff.lint]

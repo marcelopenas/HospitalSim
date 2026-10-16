@@ -1,40 +1,41 @@
 services:
   web:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
     environment:
-      - ENV=production
-      - DATABASE_URL=mysql+pymysql://root:password@db/hospitalsim
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:?Set MYSQL_USER}:${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE:?Set MYSQL_DATABASE}
+      SQL_ECHO: ${SQL_ECHO:-false}
     depends_on:
       db:
         condition: service_healthy
 
   db:
-    image: mysql:latest
+    image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: hospitalsim
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-P", "3306", "-u", "root", "-ppassword"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
       start_period: 30s
 
   frontend:
     build:
       context: ./web
       dockerfile: Dockerfile
+      args:
+        VITE_SWAGGER_URL: ${VITE_SWAGGER_URL:-}
     ports:
       - "3000:80"
-    environment:
-      - API_URL=http://localhost:8080/api 
-
 
 volumes:
   db-data:

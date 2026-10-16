@@ -2,8 +2,10 @@ FROM node:24-slim AS builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
+ARG VITE_SWAGGER_URL
+ENV VITE_SWAGGER_URL=$VITE_SWAGGER_URL
 RUN npm run build
 
 FROM nginx:stable-alpine
