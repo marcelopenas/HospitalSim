@@ -7,17 +7,24 @@ services:
       - "8080:8080"
     environment:
       - ENV=production
-      - DATABASE_URL=mysql://root:password@db/hospitalsim
+      - DATABASE_URL=mysql+pymysql://root:password@db/hospitalsim
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: mysql:latest
     environment:
       MYSQL_ROOT_PASSWORD: password
-      MYSQL_DB: hospitalsim
+      MYSQL_DATABASE: hospitalsim
     volumes:
       - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-P", "3306", "-u", "root", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   db-data:
