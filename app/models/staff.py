@@ -19,10 +19,11 @@ class StaffBase(SQLModel):
 class Staff(StaffBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
-    hospital: "Hospital" = Relationship(back_populates="staff")
-    patients: list["Patient"] = Relationship(back_populates="staff")
-    roles: list["Role"] = Relationship(
-        back_populates="staff", link_model=StaffRoleLink
+    hospital: Hospital = Relationship(back_populates="staff")
+    patients: list[Patient] = Relationship(back_populates="staff")
+    roles: list[Role] = Relationship(
+        back_populates="staff",
+        link_model=StaffRoleLink,
     )
 
 

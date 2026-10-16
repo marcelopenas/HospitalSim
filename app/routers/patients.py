@@ -1,23 +1,35 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
 from app.database import get_session
 from app.models.hospital import Hospital
-from app.models.patient import Patient, PatientCreate, PatientRead, PatientUpdate
+from app.models.patient import (
+    Patient,
+    PatientCreate,
+    PatientRead,
+    PatientUpdate,
+)
 from app.models.staff import Staff
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
 
 
 def validate_patient_references(
-    hospital_id: int, staff_id: int | None, session: Session
+    hospital_id: int,
+    staff_id: int | None,
+    session: Session,
 ) -> None:
     if session.get(Hospital, hospital_id) is None:
         raise HTTPException(status_code=400, detail="Hospital not found")
     if staff_id is not None:
         staff = session.get(Staff, staff_id)
         if staff is None:
-            raise HTTPException(status_code=400, detail="Staff member not found")
+            raise HTTPException(
+                status_code=400,
+                detail="Staff member not found",
+            )
         if staff.hospital_id != hospital_id:
             raise HTTPException(
                 status_code=400,
@@ -40,7 +52,8 @@ def get_patient_or_404(patient_id: int, session: Session) -> Patient:
     description="Create a patient and optionally assign a staff member.",
 )
 def create_patient(
-    patient: PatientCreate, session: Session = Depends(get_session)
+    patient: PatientCreate,
+    session: Annotated[Session, Depends(get_session)],
 ) -> Patient:
     validate_patient_references(patient.hospital_id, patient.staff_id, session)
     db_patient = Patient.model_validate(patient)
@@ -51,7 +64,9 @@ def create_patient(
 
 
 @router.get("", response_model=list[PatientRead], summary="List patients")
-def list_patients(session: Session = Depends(get_session)) -> list[Patient]:
+def list_patients(
+    session: Annotated[Session, Depends(get_session)],
+) -> list[Patient]:
     return list(session.exec(select(Patient)).all())
 
 
@@ -61,7 +76,10 @@ def list_patients(session: Session = Depends(get_session)) -> list[Patient]:
     summary="Get a patient",
     responses={404: {"description": "Patient not found"}},
 )
-def get_patient(patient_id: int, session: Session = Depends(get_session)) -> Patient:
+def get_patient(
+    patient_id: int,
+    session: Annotated[Session, Depends(get_session)],
+) -> Patient:
     return get_patient_or_404(patient_id, session)
 
 
@@ -74,7 +92,7 @@ def get_patient(patient_id: int, session: Session = Depends(get_session)) -> Pat
 def update_patient(
     patient_id: int,
     changes: PatientUpdate,
-    session: Session = Depends(get_session),
+    session: Annotated[Session, Depends(get_session)],
 ) -> Patient:
     patient = get_patient_or_404(patient_id, session)
     data = changes.model_dump(exclude_unset=True)
@@ -94,7 +112,10 @@ def update_patient(
     summary="Delete a patient",
     responses={404: {"description": "Patient not found"}},
 )
-def delete_patient(patient_id: int, session: Session = Depends(get_session)) -> None:
+def delete_patient(
+    patient_id: int,
+    session: Annotated[Session, Depends(get_session)],
+) -> None:
     patient = get_patient_or_404(patient_id, session)
     session.delete(patient)
     session.commit()

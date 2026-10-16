@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
@@ -21,8 +23,9 @@ class RoleBase(SQLModel):
 class Role(RoleBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
-    staff: list["Staff"] = Relationship(
-        back_populates="roles", link_model=StaffRoleLink
+    staff: list[Staff] = Relationship(
+        back_populates="roles",
+        link_model=StaffRoleLink,
     )
 
 

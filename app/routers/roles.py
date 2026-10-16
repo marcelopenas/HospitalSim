@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
@@ -20,7 +22,10 @@ def get_role_or_404(role_id: int, session: Session) -> Role:
     status_code=status.HTTP_201_CREATED,
     summary="Create a role",
 )
-def create_role(role: RoleCreate, session: Session = Depends(get_session)) -> Role:
+def create_role(
+    role: RoleCreate,
+    session: Annotated[Session, Depends(get_session)],
+) -> Role:
     if session.exec(select(Role).where(Role.name == role.name)).first():
         raise HTTPException(status_code=409, detail="Role name already exists")
     db_role = Role.model_validate(role)
@@ -31,7 +36,9 @@ def create_role(role: RoleCreate, session: Session = Depends(get_session)) -> Ro
 
 
 @router.get("", response_model=list[RoleRead], summary="List roles")
-def list_roles(session: Session = Depends(get_session)) -> list[Role]:
+def list_roles(
+    session: Annotated[Session, Depends(get_session)],
+) -> list[Role]:
     return list(session.exec(select(Role)).all())
 
 
@@ -41,7 +48,10 @@ def list_roles(session: Session = Depends(get_session)) -> list[Role]:
     summary="Get a role",
     responses={404: {"description": "Role not found"}},
 )
-def get_role(role_id: int, session: Session = Depends(get_session)) -> Role:
+def get_role(
+    role_id: int,
+    session: Annotated[Session, Depends(get_session)],
+) -> Role:
     return get_role_or_404(role_id, session)
 
 
@@ -52,13 +62,18 @@ def get_role(role_id: int, session: Session = Depends(get_session)) -> Role:
     responses={404: {"description": "Role not found"}},
 )
 def update_role(
-    role_id: int, changes: RoleUpdate, session: Session = Depends(get_session)
+    role_id: int,
+    changes: RoleUpdate,
+    session: Annotated[Session, Depends(get_session)],
 ) -> Role:
     role = get_role_or_404(role_id, session)
     data = changes.model_dump(exclude_unset=True)
-    if data.get("name") and session.exec(
-        select(Role).where(Role.name == data["name"], Role.id != role_id)
-    ).first():
+    if (
+        data.get("name")
+        and session.exec(
+            select(Role).where(Role.name == data["name"], Role.id != role_id),
+        ).first()
+    ):
         raise HTTPException(status_code=409, detail="Role name already exists")
     role.sqlmodel_update(data)
     session.add(role)
@@ -73,7 +88,10 @@ def update_role(
     summary="Delete a role",
     responses={404: {"description": "Role not found"}},
 )
-def delete_role(role_id: int, session: Session = Depends(get_session)) -> None:
+def delete_role(
+    role_id: int,
+    session: Annotated[Session, Depends(get_session)],
+) -> None:
     role = get_role_or_404(role_id, session)
     session.delete(role)
     session.commit()

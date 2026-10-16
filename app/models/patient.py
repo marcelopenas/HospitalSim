@@ -1,5 +1,5 @@
-from datetime import date
-from typing import TYPE_CHECKING, Optional
+from datetime import UTC, date, datetime
+from typing import TYPE_CHECKING
 
 from pydantic import field_validator
 from sqlmodel import Field, Relationship, SQLModel
@@ -19,16 +19,17 @@ class PatientBase(SQLModel):
     @field_validator("date_of_birth")
     @classmethod
     def date_must_be_in_the_past(cls, value: date) -> date:
-        if value >= date.today():
-            raise ValueError("date_of_birth must be in the past")
+        if value >= datetime.now(tz=UTC).date():
+            msg = "date_of_birth must be in the past"
+            raise ValueError(msg)
         return value
 
 
 class Patient(PatientBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
-    staff: Optional["Staff"] = Relationship(back_populates="patients")
-    hospital: "Hospital" = Relationship(back_populates="patients")
+    staff: Staff | None = Relationship(back_populates="patients")
+    hospital: Hospital = Relationship(back_populates="patients")
 
 
 class PatientCreate(PatientBase):
@@ -49,6 +50,10 @@ class PatientUpdate(SQLModel):
     @field_validator("date_of_birth")
     @classmethod
     def date_must_be_in_the_past(cls, value: date | None) -> date | None:
-        if value is not None and value >= date.today():
-            raise ValueError("date_of_birth must be in the past")
+        if (
+            value is not None
+            and value >= datetime.now(tz=UTC).date()
+        ):
+            msg = "date_of_birth must be in the past"
+            raise ValueError(msg)
         return value

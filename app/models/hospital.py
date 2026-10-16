@@ -20,8 +20,8 @@ class Hospital(HospitalBase, table=True):
     )
 
     id: int | None = Field(default=None, primary_key=True)
-    staff: list["Staff"] = Relationship(back_populates="hospital")
-    patients: list["Patient"] = Relationship(back_populates="hospital")
+    staff: list[Staff] = Relationship(back_populates="hospital")
+    patients: list[Patient] = Relationship(back_populates="hospital")
 
 
 class HospitalCreate(HospitalBase):

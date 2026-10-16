@@ -7,7 +7,7 @@ from app.routers import hospitals, patients, roles, staff
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(_: FastAPI):  # noqa: ANN201
     create_db_and_tables()
     yield
 

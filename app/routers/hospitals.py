@@ -1,8 +1,15 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
 from app.database import get_session
-from app.models.hospital import Hospital, HospitalCreate, HospitalRead, HospitalUpdate
+from app.models.hospital import (
+    Hospital,
+    HospitalCreate,
+    HospitalRead,
+    HospitalUpdate,
+)
 
 router = APIRouter(prefix="/hospitals", tags=["Hospitals"])
 
@@ -15,14 +22,19 @@ router = APIRouter(prefix="/hospitals", tags=["Hospitals"])
     description="Create a hospital with a unique name and location.",
 )
 def create_hospital(
-    hospital: HospitalCreate, session: Session = Depends(get_session)
+    hospital: HospitalCreate,
+    session: Annotated[Session, Depends(get_session)],
 ) -> Hospital:
     if session.exec(
         select(Hospital).where(
-            (Hospital.name == hospital.name) | (Hospital.location == hospital.location)
-        )
+            (Hospital.name == hospital.name)
+            | (Hospital.location == hospital.location),
+        ),
     ).first():
-        raise HTTPException(status_code=409, detail="Hospital name or location already exists")
+        raise HTTPException(
+            status_code=409,
+            detail="Hospital name or location already exists",
+        )
     db_hospital = Hospital.model_validate(hospital)
     session.add(db_hospital)
     session.commit()
@@ -36,7 +48,9 @@ def create_hospital(
     summary="List hospitals",
     description="Return all hospitals.",
 )
-def list_hospitals(session: Session = Depends(get_session)) -> list[Hospital]:
+def list_hospitals(
+    session: Annotated[Session, Depends(get_session)],
+) -> list[Hospital]:
     return list(session.exec(select(Hospital)).all())
 
 
@@ -47,7 +61,8 @@ def list_hospitals(session: Session = Depends(get_session)) -> list[Hospital]:
     responses={404: {"description": "Hospital not found"}},
 )
 def get_hospital(
-    hospital_id: int, session: Session = Depends(get_session)
+    hospital_id: int,
+    session: Annotated[Session, Depends(get_session)],
 ) -> Hospital:
     hospital = session.get(Hospital, hospital_id)
     if hospital is None:
@@ -64,20 +79,29 @@ def get_hospital(
 def update_hospital(
     hospital_id: int,
     changes: HospitalUpdate,
-    session: Session = Depends(get_session),
+    session: Annotated[Session, Depends(get_session)],
 ) -> Hospital:
     hospital = session.get(Hospital, hospital_id)
     if hospital is None:
         raise HTTPException(status_code=404, detail="Hospital not found")
     data = changes.model_dump(exclude_unset=True)
-    if data and session.exec(
-        select(Hospital).where(
-            Hospital.id != hospital_id,
-            (Hospital.name == data.get("name", hospital.name))
-            | (Hospital.location == data.get("location", hospital.location)),
+    if (
+        data
+        and session.exec(
+            select(Hospital).where(
+                Hospital.id != hospital_id,
+                (Hospital.name == data.get("name", hospital.name))
+                | (
+                    Hospital.location
+                    == data.get("location", hospital.location)
+                ),
+            ),
+        ).first()
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Hospital name or location already exists",
         )
-    ).first():
-        raise HTTPException(status_code=409, detail="Hospital name or location already exists")
     hospital.sqlmodel_update(data)
     session.add(hospital)
     session.commit()
@@ -91,7 +115,10 @@ def update_hospital(
     summary="Delete a hospital",
     responses={404: {"description": "Hospital not found"}},
 )
-def delete_hospital(hospital_id: int, session: Session = Depends(get_session)) -> None:
+def delete_hospital(
+    hospital_id: int,
+    session: Annotated[Session, Depends(get_session)],
+) -> None:
     hospital = session.get(Hospital, hospital_id)
     if hospital is None:
         raise HTTPException(status_code=404, detail="Hospital not found")
