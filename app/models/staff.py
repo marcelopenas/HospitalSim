@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.role import StaffRoleLink
@@ -19,11 +20,16 @@ class StaffBase(SQLModel):
 class Staff(StaffBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
-    hospital: Hospital = Relationship(back_populates="staff")
-    patients: list[Patient] = Relationship(back_populates="staff")
+    hospital: Hospital = Relationship(
+        sa_relationship=relationship("Hospital", back_populates="staff"),
+    )
+    patients: list[Patient] = Relationship(
+        sa_relationship=relationship("Patient", back_populates="staff"),
+    )
     roles: list[Role] = Relationship(
-        back_populates="staff",
-        link_model=StaffRoleLink,
+        sa_relationship=relationship(
+            "Role", secondary=StaffRoleLink.__table__, back_populates="staff"
+        ),
     )
 
 

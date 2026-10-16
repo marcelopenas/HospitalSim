@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -20,8 +21,12 @@ class Hospital(HospitalBase, table=True):
     )
 
     id: int | None = Field(default=None, primary_key=True)
-    staff: list[Staff] = Relationship(back_populates="hospital")
-    patients: list[Patient] = Relationship(back_populates="hospital")
+    staff: list[Staff] = Relationship(
+        sa_relationship=relationship("Staff", back_populates="hospital"),
+    )
+    patients: list[Patient] = Relationship(
+        sa_relationship=relationship("Patient", back_populates="hospital"),
+    )
 
 
 class HospitalCreate(HospitalBase):

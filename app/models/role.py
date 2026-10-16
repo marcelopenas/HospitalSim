@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -24,8 +25,9 @@ class Role(RoleBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
     staff: list[Staff] = Relationship(
-        back_populates="roles",
-        link_model=StaffRoleLink,
+        sa_relationship=relationship(
+            "Staff", secondary=StaffRoleLink.__table__, back_populates="roles"
+        ),
     )
 
 

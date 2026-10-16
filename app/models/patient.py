@@ -2,6 +2,7 @@ from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING
 
 from pydantic import field_validator
+from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -28,8 +29,12 @@ class PatientBase(SQLModel):
 class Patient(PatientBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
-    staff: Staff | None = Relationship(back_populates="patients")
-    hospital: Hospital = Relationship(back_populates="patients")
+    staff: Staff | None = Relationship(
+        sa_relationship=relationship("Staff", back_populates="patients"),
+    )
+    hospital: Hospital = Relationship(
+        sa_relationship=relationship("Hospital", back_populates="patients"),
+    )
 
 
 class PatientCreate(PatientBase):
