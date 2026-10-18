@@ -1,6 +1,6 @@
 # HospitalSim
 
-HospitalSim is an educational hospital operations project with two complementary components: a no-login browser dashboard for synthetic scenarios and a FastAPI service for relational CRUD backed by MySQL.
+HospitalSim is a hospital operations project with two complementary components: a no-login browser dashboard for synthetic scenarios and a FastAPI service for relational CRUD backed by MySQL.
 
 [Open project documentation](https://marcelopenas.github.io/HospitalSim/){ .md-button }
 [Local dashboard](http://localhost:3000){ .md-button }
@@ -21,6 +21,3 @@ HospitalSim is an educational hospital operations project with two complementary
 The website models admissions, department-specific bed capacity, waiting queues, care assignments, and discharges. It contains two fictional hospitals and synthetic patients. A seeded engine makes a fresh scenario reproducible. Each hospital has its own browser-saved state.
 
 The backend stores hospitals, patients, staff, and roles using SQLModel and MySQL. It has no bed or queue tables and no simulation runner. Browser demo actions do not modify the database; Swagger requests do. See [Architecture](architecture.md).
-
-!!! note "Educational scope"
-    There is no authentication. This project is intended for trusted local development with synthetic data, not clinical use or storage of real patient information.

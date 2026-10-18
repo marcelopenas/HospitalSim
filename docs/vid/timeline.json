@@ -1,0 +1,49 @@
+{
+  "title": "HospitalSim dashboard tour",
+  "duration": 30,
+  "fps": 10,
+  "size": [
+    1200,
+    850
+  ],
+  "time_unit": "seconds",
+  "path_base": "Directory containing timeline.json",
+  "source": {
+    "file_path": "overview.png",
+    "kind": "Site preview screenshot",
+    "url": "https://hospitalsim-operations-a0296c.insper-1495.chatgpt.site",
+    "description": "One genuine dashboard capture. Detail PNGs are crops; GIF motion zooms the camera, not application state."
+  },
+  "frames": [
+    {
+      "timestamp": 0,
+      "file_path": "overview.png",
+      "caption": "HospitalSim brings hospital operations into one dashboard."
+    },
+    {
+      "timestamp": 5,
+      "file_path": "controls.gif",
+      "caption": "Choose a demand scenario, adjust speed, run the simulation, or advance one hour."
+    },
+    {
+      "timestamp": 10,
+      "file_path": "metrics.gif",
+      "caption": "Read active patients, bed occupancy, staff on duty, and patients waiting for care."
+    },
+    {
+      "timestamp": 15,
+      "file_path": "capacity.gif",
+      "caption": "Department capacity shows occupied beds against the available beds in each care unit."
+    },
+    {
+      "timestamp": 20,
+      "file_path": "navigation.gif",
+      "caption": "Open the project documentation and Swagger API from the top navigation."
+    },
+    {
+      "timestamp": 25,
+      "file_path": "overview.png",
+      "caption": "The browser simulation uses synthetic data and saves its progress on this device."
+    }
+  ]
+}

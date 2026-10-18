@@ -99,6 +99,8 @@ For an HTTPS deployment or externally hosted API, set `VITE_SWAGGER_URL` to its 
 
 ## Simulation guide
 
+Watch the [captioned dashboard tour](docs/vid/index.md), download its [MP4](docs/vid/walkthrough.mp4), or view the [GIF](docs/vid/walkthrough.gif). The `docs/vid/` folder contains the source screenshot, detail images, zoom GIFs, a JSON timeline, and a renderer that stitches them according to their timestamps.
+
 Run/pause the demo, change normal/surge/critical demand, or advance one simulated hour. Patients queue when their department is full and take beds freed by discharges. State is browser-local and independent of MySQL. See the [dashboard guide](docs/dashboard.md) for controls, timing, capacity, and metric definitions.
 
 ## API example
@@ -198,8 +200,8 @@ Simulation tests cover deterministic progression, immutability, patient conserva
 
 ## Scope and known limitations
 
-This is an educational project, not clinical software. The API provides storage and CRUD, without authentication, pagination, migrations, or a backend simulation engine. Explicit null for required PATCH fields returns 422. Referenced-record deletions and staff transfers with assigned patients return 409; unassign or reassign patients first. The resulting staff hospital is always validated, and integrity conflicts roll back with 409. The API health endpoint is a process check, not a database readiness probe. See the API guide before extending the service.
+The API provides storage and CRUD, without authentication, pagination, migrations, or a backend simulation engine. Explicit null for required PATCH fields returns 422. Referenced-record deletions and staff transfers with assigned patients return 409; unassign or reassign patients first. The resulting staff hospital is always validated, and integrity conflicts roll back with 409. The API health endpoint is a process check, not a database readiness probe. See the API guide before extending the service.
 
 ## AI assistance
 
-OpenAI ChatGPT/Codex assisted with the dashboard implementation, simulation behavior and tests, documentation, and development configuration in this revision.
+OpenAI ChatGPT/Codex assisted with the dashboard implementation, simulation behavior and tests, English documentation, and development configuration in this revision.
