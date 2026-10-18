@@ -76,9 +76,3 @@ uv run mkdocs build --strict
 The explicit port avoids conflicting with API development conventions. Markdown sources are English. Navigation is declared in `mkdocs.yml`; add new pages there. Mermaid diagrams are supported through the configured SuperFences extension.
 
 The GitHub Actions workflow builds and publishes on pushes to `main`. Configure GitHub Pages to serve `gh-pages`; the site URL is `https://marcelopenas.github.io/HospitalSim/`. Local edits or a source archive do not publish a documentation update automatically.
-
-## Course deliverables
-
-The accompanying SQL brief asks for FastAPI, ORM/MySQL persistence, CRUD for at least two entities, multiple data types, and a well-documented repository. The project implements CRUD for hospitals, staff, roles, and patients. Patient dates, integer IDs, and text fields demonstrate varied types.
-
-Before submission, the owner should verify repository access for the instructors, maintain meaningful commits, record the required API demonstration video, add the video's real URL to the README, and review the AI-assistance disclosure. Those external deliverables cannot be inferred from the source archive.

@@ -4,6 +4,8 @@ An interactive hospital operations sandbox, backed by a separate FastAPI CRUD se
 
 [Project documentation](https://marcelopenas.github.io/HospitalSim/) · [Local dashboard](http://localhost:3000) · [Local Swagger UI](http://localhost:8080/docs)
 
+![HospitalSim dashboard showing simulation controls, hospital metrics, and department capacity](docs/assets/dashboard.png)
+
 ## What you can do
 
 - Switch between two fictional hospitals, each with independent simulation progress.
@@ -198,6 +200,6 @@ Simulation tests cover deterministic progression, immutability, patient conserva
 
 This is an educational project, not clinical software. The API provides storage and CRUD, without authentication, pagination, migrations, or a backend simulation engine. Explicit null for required PATCH fields returns 422. Referenced-record deletions and staff transfers with assigned patients return 409; unassign or reassign patients first. The resulting staff hospital is always validated, and integrity conflicts roll back with 409. The API health endpoint is a process check, not a database readiness probe. See the API guide before extending the service.
 
-## AI assistance and demonstration
+## AI assistance
 
 OpenAI ChatGPT/Codex assisted with the dashboard implementation, simulation behavior and tests, documentation, and development configuration in this revision.

@@ -6,6 +6,8 @@ HospitalSim is an educational hospital operations project with two complementary
 [Local dashboard](http://localhost:3000){ .md-button }
 [Local Swagger API](http://localhost:8080/docs){ .md-button }
 
+![HospitalSim dashboard showing simulation controls, hospital metrics, and department capacity](assets/dashboard.png)
+
 ## Start here
 
 1. Follow [Getting started](getting-started.md) to launch the dashboard or full stack.
