@@ -1,9 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlmodel import Session, select
 
 from app.database import get_session
+from app.dependencies import commit_or_conflict
 from app.models.hospital import Hospital
 from app.models.patient import (
     Patient,
@@ -13,7 +14,7 @@ from app.models.patient import (
 )
 from app.models.staff import Staff
 
-router = APIRouter(prefix="/patients", tags=["Patients"])
+router = APIRouter(prefix="/patients", tags=["Patients"], responses={409: {"description": "Unique-value or relationship conflict"}})
 
 
 def validate_patient_references(
@@ -58,7 +59,7 @@ def create_patient(
     validate_patient_references(patient.hospital_id, patient.staff_id, session)
     db_patient = Patient.model_validate(patient)
     session.add(db_patient)
-    session.commit()
+    commit_or_conflict(session)
     session.refresh(db_patient)
     return db_patient
 
@@ -77,7 +78,7 @@ def list_patients(
     responses={404: {"description": "Patient not found"}},
 )
 def get_patient(
-    patient_id: int,
+    patient_id: Annotated[int, Path(gt=0, description="ID of the patient record.", examples=[1])],
     session: Annotated[Session, Depends(get_session)],
 ) -> Patient:
     return get_patient_or_404(patient_id, session)
@@ -90,7 +91,7 @@ def get_patient(
     responses={404: {"description": "Patient not found"}},
 )
 def update_patient(
-    patient_id: int,
+    patient_id: Annotated[int, Path(gt=0, description="ID of the patient record to update.", examples=[1])],
     changes: PatientUpdate,
     session: Annotated[Session, Depends(get_session)],
 ) -> Patient:
@@ -101,7 +102,7 @@ def update_patient(
     validate_patient_references(hospital_id, staff_id, session)
     patient.sqlmodel_update(data)
     session.add(patient)
-    session.commit()
+    commit_or_conflict(session)
     session.refresh(patient)
     return patient
 
@@ -113,9 +114,9 @@ def update_patient(
     responses={404: {"description": "Patient not found"}},
 )
 def delete_patient(
-    patient_id: int,
+    patient_id: Annotated[int, Path(gt=0, description="ID of the patient record.", examples=[1])],
     session: Annotated[Session, Depends(get_session)],
 ) -> None:
     patient = get_patient_or_404(patient_id, session)
     session.delete(patient)
-    session.commit()
+    commit_or_conflict(session)

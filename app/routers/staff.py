@@ -2,15 +2,17 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlmodel import Session, col, select
 
 from app.database import get_session
+from app.dependencies import commit_or_conflict
 from app.models.hospital import Hospital
+from app.models.patient import Patient
 from app.models.role import Role
 from app.models.staff import Staff, StaffCreate, StaffRead, StaffUpdate
 
-router = APIRouter(prefix="/staff", tags=["Staff"])
+router = APIRouter(prefix="/staff", tags=["Staff"], responses={409: {"description": "Unique-value or relationship conflict"}})
 
 
 def get_staff_or_404(staff_id: int, session: Session) -> Staff:
@@ -41,7 +43,7 @@ def validate_references(
 
 
 def to_read(staff: Staff) -> StaffRead:
-    assert staff.id is not None, "Staff ID cannot be None for read models"  # noqa: S101
+    assert staff.id is not None, "Staff ID cannot be None for read models"
 
     return StaffRead(
         id=staff.id,
@@ -68,7 +70,7 @@ def create_staff(
     roles = validate_references(staff.hospital_id, staff.role_ids, session)
     db_staff = Staff.model_validate(staff, update={"roles": roles})
     session.add(db_staff)
-    session.commit()
+    commit_or_conflict(session)
     session.refresh(db_staff)
     return to_read(db_staff)
 
@@ -87,7 +89,7 @@ def list_staff(
     responses={404: {"description": "Staff member not found"}},
 )
 def get_staff(
-    staff_id: int,
+    staff_id: Annotated[int, Path(gt=0, description="ID of the staff record.", examples=[1])],
     session: Annotated[Session, Depends(get_session)],
 ) -> StaffRead:
     return to_read(get_staff_or_404(staff_id, session))
@@ -100,7 +102,7 @@ def get_staff(
     responses={404: {"description": "Staff member not found"}},
 )
 def update_staff(
-    staff_id: int,
+    staff_id: Annotated[int, Path(gt=0, description="ID of the staff record to update.", examples=[1])],
     changes: StaffUpdate,
     session: Annotated[Session, Depends(get_session)],
 ) -> StaffRead:
@@ -108,16 +110,17 @@ def update_staff(
     data = changes.model_dump(exclude_unset=True)
     role_ids = data.pop("role_ids", None)
     hospital_id = data.get("hospital_id", staff.hospital_id)
-    roles = (
-        validate_references(hospital_id, role_ids or [], session)
-        if role_ids is not None
-        else None
-    )
+    validated_roles = validate_references(hospital_id, role_ids or [], session)
+    roles = validated_roles if role_ids is not None else None
+    if hospital_id != staff.hospital_id and session.exec(
+        select(Patient.id).where(Patient.staff_id == staff_id)
+    ).first() is not None:
+        raise HTTPException(status_code=409, detail="Unassign or reassign patients before transferring staff")
     staff.sqlmodel_update(data)
     if roles is not None:
         staff.roles = roles
     session.add(staff)
-    session.commit()
+    commit_or_conflict(session)
     session.refresh(staff)
     return to_read(staff)
 
@@ -129,9 +132,11 @@ def update_staff(
     responses={404: {"description": "Staff member not found"}},
 )
 def delete_staff(
-    staff_id: int,
+    staff_id: Annotated[int, Path(gt=0, description="ID of the staff record.", examples=[1])],
     session: Annotated[Session, Depends(get_session)],
 ) -> None:
     staff = get_staff_or_404(staff_id, session)
+    if session.exec(select(Patient.id).where(Patient.staff_id == staff_id)).first() is not None:
+        raise HTTPException(status_code=409, detail="Unassign or reassign patients before deleting staff")
     session.delete(staff)
-    session.commit()
+    commit_or_conflict(session)

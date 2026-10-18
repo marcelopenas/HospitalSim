@@ -11,11 +11,11 @@ if TYPE_CHECKING:
 
 
 class PatientBase(SQLModel):
-    first_name: str = Field(min_length=1, max_length=100)
-    last_name: str = Field(min_length=1, max_length=100)
-    date_of_birth: date
-    staff_id: int | None = Field(default=None, foreign_key="staff.id")
-    hospital_id: int = Field(foreign_key="hospital.id")
+    first_name: str = Field(min_length=1, max_length=100, description="Patient's given name.", schema_extra={"examples": ["Alex"]})
+    last_name: str = Field(min_length=1, max_length=100, description="Patient's family name.", schema_extra={"examples": ["Taylor"]})
+    date_of_birth: date = Field(description="Birth date before today's UTC date, in YYYY-MM-DD format.", schema_extra={"examples": ["1990-05-12"]})
+    staff_id: int | None = Field(default=None, foreign_key="staff.id", description="Existing clinician at the same hospital; null unassigns the patient.", schema_extra={"examples": [1]})
+    hospital_id: int = Field(foreign_key="hospital.id", description="ID of an existing hospital.", schema_extra={"examples": [1]})
 
     @field_validator("date_of_birth")
     @classmethod
@@ -46,19 +46,16 @@ class PatientRead(PatientBase):
 
 
 class PatientUpdate(SQLModel):
-    first_name: str | None = Field(default=None, min_length=1, max_length=100)
-    last_name: str | None = Field(default=None, min_length=1, max_length=100)
-    date_of_birth: date | None = None
-    staff_id: int | None = Field(default=None, foreign_key="staff.id")
-    hospital_id: int | None = Field(default=None, foreign_key="hospital.id")
+    first_name: str = Field(default=None, min_length=1, max_length=100, description="Patient's given name. Omit in PATCH to retain the value; null is rejected.", schema_extra={"examples": ["Alex"]})
+    last_name: str = Field(default=None, min_length=1, max_length=100, description="Patient's family name. Omit in PATCH to retain the value; null is rejected.", schema_extra={"examples": ["Taylor"]})
+    date_of_birth: date = Field(default=None, description="Birth date before today's UTC date, in YYYY-MM-DD format. Omit in PATCH to retain the value; null is rejected.", schema_extra={"examples": ["1990-05-12"]})
+    staff_id: int | None = Field(default=None, foreign_key="staff.id", description="Existing clinician at the same hospital; null unassigns the patient.", schema_extra={"examples": [1]})
+    hospital_id: int = Field(default=None, foreign_key="hospital.id", description="ID of an existing hospital. Omit in PATCH to retain the value; null is rejected.", schema_extra={"examples": [1]})
 
     @field_validator("date_of_birth")
     @classmethod
-    def date_must_be_in_the_past(cls, value: date | None) -> date | None:
-        if (
-            value is not None
-            and value >= datetime.now(tz=UTC).date()
-        ):
+    def date_must_be_in_the_past(cls, value: date) -> date:
+        if value >= datetime.now(tz=UTC).date():
             msg = "date_of_birth must be in the past"
             raise ValueError(msg)
         return value

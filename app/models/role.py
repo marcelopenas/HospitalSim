@@ -17,8 +17,8 @@ class StaffRoleLink(SQLModel, table=True):
 
 
 class RoleBase(SQLModel):
-    name: str = Field(min_length=1, max_length=100)
-    description: str | None = Field(default=None, max_length=500)
+    name: str = Field(unique=True, min_length=1, max_length=100, description="Unique occupation label; does not grant access permissions.", schema_extra={"examples": ["Physician"]})
+    description: str | None = Field(default=None, max_length=500, description="Optional role description; null clears it.", schema_extra={"examples": ["Provides patient care"]})
 
 
 class Role(RoleBase, table=True):
@@ -26,7 +26,7 @@ class Role(RoleBase, table=True):
 
     staff: list[Staff] = Relationship(
         sa_relationship=relationship(
-            "Staff", secondary=StaffRoleLink.__table__, back_populates="roles"
+            "Staff", secondary="staff_roles", back_populates="roles", passive_deletes=True
         ),
     )
 
@@ -40,5 +40,5 @@ class RoleRead(RoleBase):
 
 
 class RoleUpdate(SQLModel):
-    name: str | None = Field(default=None, min_length=1, max_length=100)
-    description: str | None = Field(default=None, max_length=500)
+    name: str = Field(default=None, min_length=1, max_length=100, description="Unique occupation label; does not grant access permissions. Omit in PATCH to retain the value; null is rejected.", schema_extra={"examples": ["Physician"]})
+    description: str | None = Field(default=None, max_length=500, description="Optional role description; null clears it.", schema_extra={"examples": ["Provides patient care"]})

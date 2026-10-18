@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -7,7 +8,7 @@ from app.routers import hospitals, patients, roles, staff
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):  # noqa: ANN201
+async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
     create_db_and_tables()
     yield
 

@@ -1,36 +1,41 @@
-"""CRUD regression checks using isolated SQLite, not MySQL integration tests."""
+"""Integration tests for an explicitly configured, disposable MySQL schema."""
 import os
 import unittest
 
-os.environ.setdefault("DATABASE_URL", "sqlite://")
-
 from fastapi.testclient import TestClient
+from sqlalchemy.engine import make_url
 from sqlmodel import Session, SQLModel, create_engine
-from sqlalchemy.pool import StaticPool
 
-from app.database import get_session
-from app.main import app
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
 
 class ApiSmokeTests(unittest.TestCase):
     def setUp(self):
-        self.engine = create_engine(
-            "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-        )
+        if not TEST_DATABASE_URL:
+            self.skipTest("Set TEST_DATABASE_URL to a disposable MySQL database ending in _test")
+        url = make_url(TEST_DATABASE_URL)
+        if url.drivername != "mysql+pymysql" or not url.database or not url.database.endswith("_test"):
+            msg = "TEST_DATABASE_URL must use mysql+pymysql and a disposable database ending in _test"
+            raise ValueError(msg)
+        os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+        from app.database import get_session
+        from app.main import app
+
+        self.engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
+        self.addCleanup(self.engine.dispose)
+        SQLModel.metadata.drop_all(self.engine)
         SQLModel.metadata.create_all(self.engine)
+        self.addCleanup(SQLModel.metadata.drop_all, self.engine)
 
         def session_override():
             with Session(self.engine) as session:
                 yield session
 
         app.dependency_overrides[get_session] = session_override
-        # No context manager: skip the production database lifespan hook.
+        self.addCleanup(app.dependency_overrides.clear)
+        # Skip the production lifespan; this suite controls its own test tables.
         self.client = TestClient(app)
-
-    def tearDown(self):
-        self.client.close()
-        app.dependency_overrides.clear()
-        self.engine.dispose()
+        self.addCleanup(self.client.close)
 
     def create(self, resource, payload):
         response = self.client.post(resource, json=payload)
@@ -77,6 +82,35 @@ class ApiSmokeTests(unittest.TestCase):
         self.assertEqual(self.client.post("/patients", json=data).status_code, 400)
         data.update(hospital_id=a["id"], date_of_birth="2999-01-01")
         self.assertEqual(self.client.post("/patients", json=data).status_code, 422)
+
+    def test_patch_nulls_and_relationship_guards(self):
+        hospital = self.create("/hospitals", {"name": "A", "location": "A City"})
+        destination = self.create("/hospitals", {"name": "B", "location": "B City"})
+        role = self.create("/roles", {"name": "Physician"})
+        staff = self.create("/staff", {"first_name": "Olivia", "last_name": "Chen", "hospital_id": hospital["id"], "role_ids": [role["id"]]})
+        patient = self.create("/patients", {"first_name": "Alex", "last_name": "Taylor", "date_of_birth": "1990-05-12", "hospital_id": hospital["id"], "staff_id": staff["id"]})
+        for resource, record, fields in (
+            ("hospitals", hospital, ("name", "location")),
+            ("roles", role, ("name",)),
+            ("staff", staff, ("first_name", "last_name", "hospital_id")),
+            ("patients", patient, ("first_name", "last_name", "date_of_birth", "hospital_id")),
+        ):
+            path = f"/{resource}/{record['id']}"
+            for field in fields:
+                self.assertEqual(self.client.patch(path, json={field: None}).status_code, 422)
+                self.assertEqual(self.client.get(path).json(), record)
+            self.assertEqual(self.client.patch(path, json={}).json(), record)
+        for resource, record in (("hospitals", hospital), ("roles", role), ("staff", staff)):
+            self.assertEqual(self.client.delete(f"/{resource}/{record['id']}").status_code, 409)
+        path = f"/staff/{staff['id']}"
+        for roles in ({}, {"role_ids": None}, {"role_ids": []}):
+            self.assertEqual(self.client.patch(path, json={"hospital_id": 999999, **roles}).status_code, 400)
+            self.assertEqual(self.client.patch(path, json={"hospital_id": destination["id"], **roles}).status_code, 409)
+            self.assertEqual(self.client.get(path).json(), staff)
+        self.assertEqual(self.client.patch(f"/patients/{patient['id']}", json={"staff_id": None}).status_code, 200)
+        self.assertEqual(self.client.patch(path, json={"hospital_id": destination["id"]}).status_code, 200)
+        self.assertEqual(self.client.patch(f"/roles/{role['id']}", json={"description": None}).status_code, 200)
+
 
 
 if __name__ == "__main__":

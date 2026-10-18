@@ -1,17 +1,20 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlmodel import Session, select
 
 from app.database import get_session
+from app.dependencies import commit_or_conflict
 from app.models.hospital import (
     Hospital,
     HospitalCreate,
     HospitalRead,
     HospitalUpdate,
 )
+from app.models.patient import Patient
+from app.models.staff import Staff
 
-router = APIRouter(prefix="/hospitals", tags=["Hospitals"])
+router = APIRouter(prefix="/hospitals", tags=["Hospitals"], responses={409: {"description": "Unique-value or relationship conflict"}})
 
 
 @router.post(
@@ -37,7 +40,7 @@ def create_hospital(
         )
     db_hospital = Hospital.model_validate(hospital)
     session.add(db_hospital)
-    session.commit()
+    commit_or_conflict(session)
     session.refresh(db_hospital)
     return db_hospital
 
@@ -61,7 +64,7 @@ def list_hospitals(
     responses={404: {"description": "Hospital not found"}},
 )
 def get_hospital(
-    hospital_id: int,
+    hospital_id: Annotated[int, Path(gt=0, description="ID of the hospital record.", examples=[1])],
     session: Annotated[Session, Depends(get_session)],
 ) -> Hospital:
     hospital = session.get(Hospital, hospital_id)
@@ -77,7 +80,7 @@ def get_hospital(
     responses={404: {"description": "Hospital not found"}},
 )
 def update_hospital(
-    hospital_id: int,
+    hospital_id: Annotated[int, Path(gt=0, description="ID of the hospital record to update.", examples=[1])],
     changes: HospitalUpdate,
     session: Annotated[Session, Depends(get_session)],
 ) -> Hospital:
@@ -104,7 +107,7 @@ def update_hospital(
         )
     hospital.sqlmodel_update(data)
     session.add(hospital)
-    session.commit()
+    commit_or_conflict(session)
     session.refresh(hospital)
     return hospital
 
@@ -116,11 +119,16 @@ def update_hospital(
     responses={404: {"description": "Hospital not found"}},
 )
 def delete_hospital(
-    hospital_id: int,
+    hospital_id: Annotated[int, Path(gt=0, description="ID of the hospital record.", examples=[1])],
     session: Annotated[Session, Depends(get_session)],
 ) -> None:
     hospital = session.get(Hospital, hospital_id)
     if hospital is None:
         raise HTTPException(status_code=404, detail="Hospital not found")
+    if (
+        session.exec(select(Staff.id).where(Staff.hospital_id == hospital_id)).first() is not None
+        or session.exec(select(Patient.id).where(Patient.hospital_id == hospital_id)).first() is not None
+    ):
+        raise HTTPException(status_code=409, detail="Hospital has staff or patients; remove dependents first")
     session.delete(hospital)
-    session.commit()
+    commit_or_conflict(session)
