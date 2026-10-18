@@ -7,7 +7,7 @@ A staff member belongs to a hospital, can have multiple roles, and can be assign
 | `id` | integer | Generated | Primary key |
 | `first_name` | string | Yes | 1–100 characters |
 | `last_name` | string | Yes | 1–100 characters |
-| `hospital_id` | integer | Yes | Existing hospital checked on create |
+| `hospital_id` | integer | Yes | Existing hospital checked on create and update |
 | `role_ids` | integer array | No | Defaults to `[]`; referenced roles must exist |
 
 `role_ids` is a create/update/read schema field, not a column in `staff`. The ORM stores relationships through `staff_roles`. Read responses return sorted role IDs. There is no singular `role` field.
@@ -29,4 +29,4 @@ PATCH with `role_ids: [1,2]` replaces current roles. `role_ids: []` clears them.
 
 ## Relationship limitations
 
-Creating a staff member validates its hospital. Updating a hospital without also updating roles does not use the same reference-validation helper, and moving staff does not revalidate assigned patients. Keep patient assignments consistent before moves. Delete dependent patients before staff, or explicitly unassign patients through patient PATCH. Required staff fields must remain non-null.
+The resulting hospital is validated on every update, even without role changes. Transfers to a different hospital and deletions return 409 while patients remain assigned. Unassign/reassign patients first. Required fields reject explicit null with 422; a failed validation leaves staff fields and roles unchanged.

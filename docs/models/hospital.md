@@ -20,4 +20,4 @@ A hospital has many staff and patients. Each of those records references one hos
 {"name":"Riverside Medical Center","location":"Boston, Massachusetts"}
 ```
 
-PATCH may supply either name or location. Omit unchanged fields and do not set required values to null. A missing item returns 404 and a detected duplicate returns 409. Remove dependent staff and patients before deleting a hospital; deletion behavior is not normalized into a complete API-level integrity-error contract.
+PATCH may supply either name or location. Omit unchanged fields and do not set required values to null. A missing item returns 404 and a detected duplicate returns 409. Deleting a hospital with staff or patients returns 409. Remove or move those dependents first. Explicit null in a required PATCH field returns 422.

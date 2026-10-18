@@ -34,7 +34,7 @@ Progress is specific to the current origin (scheme, hostname, and port) and brow
 
 ## A request returns 400, 409, 422, or 500
 
-Use IDs returned by your server rather than assuming the example IDs. Check relationship prerequisites and the `detail` response. Names and locations can conflict; patient birth dates must be in the past; staff assigned to a patient must belong to the same hospital. Explicit nulls for required PATCH fields, deletes with dependents, and certain staff transfers can trigger unhandled integrity errors. Inspect server logs and see the [API guide](api/index.md).
+Use IDs returned by your server rather than assuming the example IDs. Check relationship prerequisites and the `detail` response. Names and locations can conflict; patient birth dates must be in the past; staff assigned to a patient must belong to the same hospital. Null required PATCH fields return 422. Referenced-record deletions and staff transfers with assigned patients return 409. Unassign/reassign dependent patients or remove role links before retrying. Inspect server logs and see the [API guide](api/index.md).
 
 ## The build fails on an older Node or Python
 
@@ -43,3 +43,7 @@ Use Node 24 for the dashboard and its native TypeScript tests, and Python 3.14+ 
 ## Port 3000, 5173, or 8080 is already in use
 
 Change the published Compose port or use Vite's `--port` option. If the API port changes, update `VITE_SWAGGER_URL` and rebuild/restart the frontend. For local documentation, use `mkdocs serve --dev-addr 127.0.0.1:8000`.
+
+## Database data disappears after running run.sh
+
+This is deliberate: `run.sh` exports dependencies and executes `docker compose down -v` before starting a clean instance, deleting Compose volumes and all MySQL API records. Use `docker compose down` and `docker compose up --build` without `-v` to preserve data. The browser demo has separate local storage and a separate reset control.

@@ -38,7 +38,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Alternatively, `bash run.sh` creates `.env` from the example when missing and starts the stack. `bash run.sh -d` runs in the background. Existing database data is preserved.
+**`bash run.sh` deliberately deletes the project's Compose volumes and all MySQL API records**, then rebuilds a clean instance. This is intentional for repeatable development and demonstrations. It exports `requirements.txt` with uv and creates `.env` from the example when missing. `bash run.sh -d` performs the same reset in the background. To preserve records, use `docker compose down` followed by `docker compose up --build` instead. Browser-local demo progress is separate; reset it in the dashboard.
 
 | Service | Address | Purpose |
 | --- | --- | --- |
@@ -97,19 +97,7 @@ For an HTTPS deployment or externally hosted API, set `VITE_SWAGGER_URL` to its 
 
 ## Simulation guide
 
-Start with **Run simulation**. At 1× speed, every three real seconds advances 15 simulated minutes; 2× and 4× shorten that interval. **+1 hour** immediately runs four steps. The simulation starts at Day 1, 08:00, and advances only while the page is open and running. Reloads start paused.
-
-| Scenario | New patients per 15 simulated minutes |
-| --- | --- |
-| Normal operations | 1–3 |
-| Patient surge | 4–6 |
-| Critical demand | 7–9 |
-
-Arrivals select one of four departments. A patient receives a bed when that department has capacity, otherwise joins its queue. Stays last 60–479 simulated minutes for new patients. Discharges free beds for waiting patients in arrival order within that department. Staffing is a fixed scenario input, not a scheduling model or a constraint on bed assignment.
-
-The charts show cumulative admissions and discharges from the start, using up to 25 samples (six simulated hours during regular stepping). The 54 and 38 initial in-care patients are baseline occupancy, excluded from new admissions. Active patients include both in-care and waiting patients. Staff cards show eight representative named clinicians; the total staff counts are 24 and 16.
-
-The activity feed retains the latest 40 events; the directory retains active patients and the latest 200 discharged patients after each step. Counters remain cumulative. **Reset simulation** restores only the selected hospital after confirmation. Browser storage is local to the origin; changing port/browser, clearing site data, or using another device gives separate progress. If storage is unavailable or full, the demo continues in memory with a notice.
+Run/pause the demo, change normal/surge/critical demand, or advance one simulated hour. Patients queue when their department is full and take beds freed by discharges. State is browser-local and independent of MySQL. See the [dashboard guide](docs/dashboard.md) for controls, timing, capacity, and metric definitions.
 
 ## API example
 
@@ -174,7 +162,7 @@ erDiagram
     }
 ```
 
-A patient belongs to one hospital and may have one assigned staff member. The patient API checks that assigned staff belongs to the same hospital. Staff can have multiple roles through `staff_roles`. Roles describe occupations; they do not grant access permissions. Hospital names and locations have database uniqueness constraints. Role-name uniqueness is enforced by the router, not a database constraint.
+A patient belongs to one hospital and may have one assigned staff member. The patient API checks that assigned staff belongs to the same hospital. Staff can have multiple roles through `staff_roles`. Roles describe occupations; they do not grant access permissions. Hospital names and locations have database uniqueness constraints. Role-name uniqueness is enforced by the router and database for new tables. For an existing database, resolve duplicate names and apply `ALTER TABLE role ADD UNIQUE (name);` once, or use the deliberate clean reset in `run.sh`.
 
 ## Repository map
 
@@ -187,7 +175,7 @@ docs/                English MkDocs guides, API usage, and data model reference
 .github/workflows/   Documentation deployment to GitHub Pages
 compose.yml          MySQL, API, and frontend services
 .env.example         Local configuration template (no production credentials)
-run.sh               Non-destructive Compose startup helper
+run.sh               Deliberate volume reset and clean-instance startup helper
 ```
 
 ## Documentation and checks
@@ -204,12 +192,12 @@ npm run build
 
 MkDocs publishes to [https://marcelopenas.github.io/HospitalSim/](https://marcelopenas.github.io/HospitalSim/) through the existing GitHub Actions workflow on pushes to `main`. GitHub Pages must use the `gh-pages` deployment branch. Updating files locally does not publish them.
 
-Simulation tests cover deterministic progression, immutability, patient conservation, department capacity, queue promotion, increased surge demand, and midnight rollover. API regression tests additionally exercise health, Swagger/OpenAPI, full CRUD, and relationship/date validation using an isolated SQLite database. These do not replace MySQL integration tests. See [development](docs/development.md) and [troubleshooting](docs/troubleshooting.md).
+Simulation tests cover deterministic progression, immutability, patient conservation, department capacity, queue promotion, increased surge demand, and midnight rollover. API integration tests use MySQL only and require `TEST_DATABASE_URL` pointing to a disposable database whose name ends in `_test`. They are skipped if that variable is absent; see the development guide for setup. See [development](docs/development.md) and [troubleshooting](docs/troubleshooting.md).
 
 ## Scope and known limitations
 
-This is an educational project, not clinical software. The API provides storage and CRUD, without authentication, pagination, migrations, or a backend simulation engine. Deleting referenced records, explicitly setting required fields to null in PATCH, and some relationship changes can produce database errors; remove dependents first and provide non-null required fields. Moving a staff member to another hospital does not validate all existing patient assignments. The API health endpoint is a process check, not a database readiness probe. See the API guide before extending the service.
+This is an educational project, not clinical software. The API provides storage and CRUD, without authentication, pagination, migrations, or a backend simulation engine. Explicit null for required PATCH fields returns 422. Referenced-record deletions and staff transfers with assigned patients return 409; unassign or reassign patients first. The resulting staff hospital is always validated, and integrity conflicts roll back with 409. The API health endpoint is a process check, not a database readiness probe. See the API guide before extending the service.
 
 ## AI assistance and demonstration
 
-OpenAI ChatGPT/Codex assisted with the dashboard implementation, simulation behavior and tests, English documentation, and development configuration in this revision.
+OpenAI ChatGPT/Codex assisted with the dashboard implementation, simulation behavior and tests, documentation, and development configuration in this revision.

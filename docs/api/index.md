@@ -90,7 +90,7 @@ curl -i -X DELETE http://localhost:8080/patients/1
 
 `staff_id: null` explicitly unassigns a patient; omitting it leaves the assignment unchanged. For staff PATCH, `role_ids: []` removes all roles, omission or null leaves existing roles unchanged, and a list replaces the set of roles. Duplicate input role IDs collapse to unique relationships.
 
-Delete dependents first: patients, then staff, then hospitals; remove staff-role links by updating/deleting staff before deleting roles. The API does not offer a documented cascade-delete contract or translate every database integrity failure into an HTTP conflict.
+Delete dependents first: patients, then staff, then hospitals; remove staff-role links by updating/deleting staff before deleting roles. A referenced hospital, staff member with assigned patients, or assigned role returns 409 on deletion without changing those records. Unreferenced staff deletion removes its role links but retains roles. Integrity conflicts during commit roll back and return 409.
 
 ## Validation and errors
 
@@ -98,8 +98,8 @@ Delete dependents first: patients, then staff, then hospitals; remove staff-role
 | --- | --- |
 | 400 | Missing referenced hospital/staff/role; patient and clinician belong to different hospitals |
 | 404 | Requested item ID not found |
-| 409 | Duplicate hospital name/location, or duplicate role name |
-| 422 | Invalid request schema, empty/overlong string, missing required field, or non-past birth date |
+| 409 | Duplicate hospital name/location or role name; protected deletion or staff transfer |
+| 422 | Invalid request schema, null required PATCH field, non-positive path ID, empty/overlong string, missing field, or non-past birth date |
 | 500 | Unhandled server/database error; check logs |
 
 Router errors use an envelope such as:
@@ -112,7 +112,7 @@ FastAPI's 422 response has a structured `detail` array describing field validati
 
 ## Current limitations
 
-There is no authentication, pagination, filtering, or backend simulation state. Hospital uniqueness is enforced in the database and router; role-name uniqueness is checked only by the router and can race under concurrent requests. Required database fields are typed as optional in PATCH schemas, so explicitly setting them to null can result in an integrity error; send non-null values. Some staff hospital changes and deletion operations are not fully checked against existing patient relationships. Do not assume every invalid relationship operation returns a clean 4xx response.
+There is no authentication, pagination, filtering, or backend simulation state. Hospital and role uniqueness are enforced by the router and database for new tables. Required PATCH fields may be omitted but reject explicit null with 422. Only patient `staff_id` and role `description` can be cleared with null; null staff `role_ids` leaves roles unchanged. Every staff update validates its resulting hospital (400 if missing), including when roles are omitted. A transfer with assigned patients returns 409; unassign/reassign them before moving staff. Existing schemas require the role-name constraint described in the development guide.
 
 ## Health endpoint
 

@@ -12,7 +12,7 @@
 | `web/src/simulation.ts` | Pure seeded simulation engine |
 | `web/src/App.css` / `index.css` | Dashboard layout, styling, and responsive rules |
 | `web/tests/` | Node-based simulation tests |
-| `tests/` | Isolated SQLite API regression tests |
+| `tests/` | MySQL-only API integration tests |
 | `docs/` / `mkdocs.yml` | Documentation source and navigation |
 | `compose.yml` | API, frontend, and MySQL services |
 
@@ -46,15 +46,25 @@ Commit `pyproject.toml`, `uv.lock`, and `requirements.txt` together. Docker inst
 
 ## Backend validation
 
-Start an accessible MySQL database, export `DATABASE_URL`, and run the service. Use Swagger to exercise create/list/read/patch/delete for all four resources, including missing IDs, duplicate names, invalid dates, invalid references, and same-hospital staff assignment. Verify records persist across a service restart. Run the isolated API regression suite with:
+Start an accessible MySQL database, export `DATABASE_URL`, and run the service. Use Swagger to exercise create/list/read/patch/delete for all four resources, including missing IDs, duplicate names, invalid dates, invalid references, and same-hospital staff assignment. Verify records persist across a service restart. Create an empty, disposable MySQL schema such as `hospitalsim_test`, with a user permitted to create and drop its tables. Run the API integration suite with:
 
 ```bash
+export TEST_DATABASE_URL='mysql+pymysql://TEST_USER:TEST_PASSWORD@localhost:3306/hospitalsim_test'
 uv run python -m unittest discover -s tests -v
 ```
 
-These tests override the database session with in-memory SQLite and skip the production lifespan hook, so they do not create or modify production tables. They cover health, Swagger/OpenAPI, the hospital/role/staff/patient relationship chain, all CRUD methods, duplicate hospitals, cross-hospital assignments, and invalid birth dates. Explicit SQLAlchemy relationship targets avoid deferred type annotations being interpreted as ORM class names on Python 3.14. These checks do not constitute a MySQL integration test suite.
+These tests use MySQL only. They require an explicit `TEST_DATABASE_URL` using `mysql+pymysql` and a database name ending in `_test`; no application database is used as a fallback. **The suite drops and recreates its test tables, so the named schema must be disposable.** Without that variable, integration tests are skipped. They cover CRUD, references, invalid dates, null PATCH validation, protected deletions, and staff transfers. The production lifespan is skipped so all table creation is controlled by the suite.
 
-The existing API does not fully guard every null PATCH, deletion, or staff transfer case. Add appropriate integrity validation and transaction handling when extending those paths. `create_all` is not a migration mechanism.
+Required PATCH fields reject null with 422; protected deletions and transfers return 409. Commit-time integrity conflicts roll back. `create_all` is not a migration mechanism. Existing databases need `ALTER TABLE role ADD UNIQUE (name);` after resolving duplicate role names, or a deliberate clean reset with `run.sh`.
+
+## Linters
+
+```bash
+uv tool run ruff check .
+uv tool run ty check --python .venv/bin/python .
+```
+
+Run `uv sync --locked` first to create the project environment. Ruff and ty are development tools; no new runtime dependencies are required.
 
 ## Documentation
 

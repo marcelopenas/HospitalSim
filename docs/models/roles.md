@@ -14,8 +14,8 @@ Roles describe staff occupations or responsibilities. They do not grant authenti
 {"name":"Physician","description":"Provides clinical care"}
 ```
 
-The router rejects duplicate names with 409 when creating or renaming roles. There is no database unique constraint on `role.name`, so this check alone is not concurrency-safe. Missing role IDs return 404.
+The router rejects duplicate names with 409 when creating or renaming roles. New tables also enforce role-name uniqueness in MySQL. Existing tables need the unique constraint described in the development guide. Missing role IDs return 404.
 
 ## Staff relationships
 
-Staff and roles have a many-to-many relationship through `StaffRoleLink`, stored in `staff_roles` with composite primary key `(staff_id, role_id)`. Assign and remove roles through a staff member's `role_ids` field. Clear related assignments before deleting a role. Role PATCH permits `description: null` to clear the optional description; keep `name` non-null.
+Staff and roles have a many-to-many relationship through `StaffRoleLink`, stored in `staff_roles` with composite primary key `(staff_id, role_id)`. Assign and remove roles through a staff member's `role_ids` field. An assigned role returns 409 on deletion; clear related assignments first. Role PATCH permits `description: null` to clear the optional description; keep `name` non-null.

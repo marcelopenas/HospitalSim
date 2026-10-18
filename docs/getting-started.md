@@ -22,7 +22,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-You can also use `bash run.sh`, which creates `.env` from the example if absent and runs Compose. It does not delete database volumes. Add `-d` to start in the background.
+**`bash run.sh` deliberately deletes the project's Compose volumes and all MySQL API records**, then rebuilds a clean instance. This is intentional for repeatable development and demonstrations. It exports `requirements.txt` with uv and creates `.env` from the example when missing. `bash run.sh -d` performs the same reset in the background. To preserve records, use `docker compose down` followed by `docker compose up --build` instead. Browser-local demo progress is separate; reset it in the dashboard.
 
 | Component | URL |
 | --- | --- |

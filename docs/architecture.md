@@ -21,15 +21,7 @@ The frontend Docker image runs an npm build in a Node 24 stage, then copies `dis
 
 Each router receives a SQLModel session through `get_session`, queries or modifies model instances, commits changes, and returns a declared response model. Hospitals, staff, and patients are related through foreign keys; staff and roles are joined through `staff_roles`.
 
-The FastAPI lifespan function calls `SQLModel.metadata.create_all` on startup. The engine is created from the required `DATABASE_URL` environment variable. Compose waits for the database healthcheck before starting the API; `/health` itself reports process health only.
+The FastAPI lifespan function calls `SQLModel.metadata.create_all` on startup. The engine is created from the required `DATABASE_URL` environment variable, which must use `mysql+pymysql`; MySQL is the only supported database. Compose waits for the database healthcheck before starting the API; `/health` itself reports process health only.
 
 There is no `/api` prefix, authentication, authorization, CORS middleware, pagination, or migration framework. Swagger is supplied by FastAPI at `/docs`. Cross-origin browser API integration would require additional configuration, error handling, and deliberate mapping between the simulation domain and persisted entities.
 
-## Boundaries to preserve when extending
-
-- Keep demo records synthetic and clearly labeled.
-- Add explicit migrations rather than relying on `create_all` to alter tables.
-- Define transactional admission and discharge behavior before adding backend bed/queue models.
-- Enforce cross-hospital assignment rules on all affected update paths, not only patient creation.
-- Add authentication and authorization before exposing sensitive records.
-- Add MySQL integration tests for referential actions, conflict handling, and concurrency.
