@@ -9,7 +9,9 @@ nav:
   - Home: index.md
   - Getting started: getting-started.md
   - Dashboard guide: dashboard.md
-  - Earlier interface media: vid/index.md
+  - Showcases:
+      - Overview: vid/index.md
+      - Recording and rebuilding: vid/recording.md
   - Architecture: architecture.md
   - API usage: api/index.md
   - Data model:

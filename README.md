@@ -7,6 +7,10 @@ A no-login hospital dashboard backed by a FastAPI CRUD API and MySQL. Manage hos
 > [!IMPORTANT]
 > **Run the project locally before opening the dashboard or Swagger links.** HospitalSim is intended for local use: manual CRUD operations, population, and testing repeatedly create, modify, and delete database records. A shared public instance would be continually changed and reset, making it unsuitable as a stable demo. The project documentation is available online independently.
 
+<!-- dashboard-capture:start -->
+<!-- A current dashboard screenshot is inserted here after successful UI capture. -->
+<!-- dashboard-capture:end -->
+
 ## Start with Docker
 
 Requires Docker Engine/Desktop and Compose v2.
@@ -121,7 +125,7 @@ export TEST_DATABASE_URL='mysql+pymysql://TEST_USER:TEST_PASSWORD@localhost:3306
 uv run python -m unittest discover -s tests -v
 ```
 
-The ORM regression test runs without a server and verifies that assigning a shared role to Mia does not remove it from Olivia. MySQL integration tests also cover the persisted startup flag and shared role assignments; they are skipped without `TEST_DATABASE_URL`. The English MkDocs documentation is deployed through the existing GitHub Actions workflow on pushes to `main`. [Earlier interface media](docs/vid/index.md) and its JSON-based renderer remain in `docs/vid/`; those archived captures show the previous interface.
+The ORM regression test runs without a server and verifies that assigning a shared role to Mia does not remove it from Olivia. MySQL integration tests also cover the persisted startup flag and shared role assignments; they are skipped without `TEST_DATABASE_URL`. The English MkDocs documentation is deployed through the existing GitHub Actions workflow on pushes to `main`. [Showcases](docs/vid/index.md) documents the current UI recording flows. The optional recorder publishes the overview, chapter videos, timestamped JSON, and dashboard image together after a successful capture; current replacement media have not yet been recorded.
 
 ## Repository
 

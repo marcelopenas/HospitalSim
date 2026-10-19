@@ -28,6 +28,7 @@ class Recorder:
         self.root = root
         self.frames: list[dict[str, Any]] = []
         self.timestamp = 0.0
+        self.chapter = "startup"
 
     async def shot(self, name: str, caption: str, duration: float = 5) -> None:
         path = f"screens/{len(self.frames) + 1:02d}-{name}.png"
@@ -40,6 +41,7 @@ class Recorder:
                 "timestamp": round(self.timestamp, 2),
                 "file_path": path,
                 "caption": caption,
+                "chapter": self.chapter,
             }
         )
         self.timestamp += duration
@@ -76,20 +78,8 @@ class Recorder:
             await detail.locator("summary").click()
         await detail.scroll_into_view_if_needed()
 
-    async def save(self) -> None:
-        await (
-            self.page.get_by_role("dialog")
-            .get_by_role("button", name="Review request", exact=True)
-            .click()
-        )
-        await (
-            self.page.get_by_role("dialog")
-            .get_by_role("button", name="Send request", exact=True)
-            .click()
-        )
-        await self.idle()
-
     async def edit(self, resource: str, values: dict[str, str], caption: str) -> None:
+        self.chapter = resource.lower()
         await self.nav(resource)
         await (
             self.page.locator("tbody tr")
@@ -101,7 +91,49 @@ class Recorder:
             await dialog.get_by_label(field, exact=True).fill(value)
         await dialog.locator(".modal-heading").scroll_into_view_if_needed()
         await self.shot(f"edit-{resource.lower()}", caption)
-        await self.save()
+        await dialog.get_by_role("button", name="Review request", exact=True).click()
+        await self.expand()
+        await self.shot(
+            f"patch-{resource.lower()}",
+            "Review the changed fields, JSON PATCH payload, and illustrative SQL before saving.",
+        )
+        await (
+            self.page.get_by_role("dialog")
+            .get_by_role("button", name="Send request", exact=True)
+            .click()
+        )
+        await self.idle()
+        await self.shot(
+            f"saved-{resource.lower()}",
+            "The saved values are returned by the API and displayed in the directory.",
+        )
+        await self.read(resource)
+
+    async def read(self, resource: str) -> None:
+        await (
+            self.page.locator("tbody tr")
+            .first.get_by_role("button", name="Read", exact=True)
+            .click()
+        )
+        await self.expand()
+        await self.shot(
+            f"get-{resource.lower()}",
+            f"Read an individual {resource.lower()} record: review the GET and its SQL example.",
+        )
+        await (
+            self.page.get_by_role("dialog")
+            .get_by_role("button", name="Read record", exact=True)
+            .click()
+        )
+        await self.idle()
+        detail = self.page.locator(".request-log > details").first
+        if await detail.get_attribute("open") is None:
+            await detail.locator("summary").first.click()
+        await detail.scroll_into_view_if_needed()
+        await self.shot(
+            f"response-{resource.lower()}",
+            "Inspect the HTTP status and response JSON in the request log.",
+        )
 
     async def create(
         self,
@@ -112,6 +144,7 @@ class Recorder:
         clinician: str | None = None,
         role: str | None = None,
     ) -> None:
+        self.chapter = resource.lower()
         await self.nav(resource)
         await self.page.get_by_role(
             "button", name="+ Create record", exact=True
@@ -238,10 +271,31 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                 await page.get_by_role(
                     "heading", name="How would you like to begin?"
                 ).wait_for()
+                await asyncio.gather(*pending)
+                if set(observed) != {"hospitals", "roles", "staff", "patients"} or any(
+                    observed.values()
+                ):
+                    raise RuntimeError(
+                        "Capture requires a fresh empty local instance. No existing records were cleared; use a disposable clean instance and rerun."
+                    )
                 await recorder.shot(
                     "welcome",
                     "Start empty to manage your own records, or review a predefined population. Dashboard and Swagger require the local stack.",
                     6,
+                )
+                await page.get_by_role(
+                    "button", name="Review demo population", exact=True
+                ).click()
+                await recorder.expand()
+                await recorder.shot(
+                    "welcome-population-preview",
+                    "Pre-populate opens the concrete INSERT and relationship write plan. Cancel returns to the startup choices without writes.",
+                    7,
+                )
+                await (
+                    page.get_by_role("dialog")
+                    .get_by_role("button", name="Cancel", exact=True)
+                    .click()
                 )
                 await page.get_by_role(
                     "button", name="Start without adding demo data", exact=True
@@ -257,17 +311,11 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                 ).click()
                 await page.get_by_role("navigation", name="Main navigation").wait_for()
                 await recorder.idle()
-                await asyncio.gather(*pending)
-                if set(observed) != {"hospitals", "roles", "staff", "patients"} or any(
-                    observed.values()
-                ):
-                    raise RuntimeError(
-                        "Capture requires a fresh empty local instance. No existing records were cleared; use a disposable clean instance and rerun."
-                    )
                 await recorder.shot(
                     "empty-overview",
                     "Overview starts with zero records and reports actual API counts and care assignments.",
                 )
+                recorder.chapter = "testing"
                 await recorder.nav("Testing")
                 await page.get_by_role("button", name="Test", exact=True).click()
                 await recorder.shot(
@@ -369,6 +417,7 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                     "read-response",
                     "The request log shows the returned JSON, status, payload, and SQL example. API errors are shown here too.",
                 )
+                recorder.chapter = "hospitals"
                 await recorder.nav("Hospitals")
                 await (
                     page.locator("tbody tr")
@@ -387,6 +436,7 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                     6,
                 )
                 for resource in ("Patients", "Staff", "Roles", "Hospitals"):
+                    recorder.chapter = resource.lower()
                     await recorder.nav(resource)
                     await (
                         page.locator("tbody tr")
@@ -405,17 +455,23 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                         .click()
                     )
                     await recorder.idle()
+                    await recorder.shot(
+                        f"deleted-{resource.lower()}",
+                        "The deleted record is absent from the refreshed API directory.",
+                    )
+                recorder.chapter = "testing"
                 await recorder.nav("Testing")
                 await recorder.shot(
                     "testing",
                     "Testing has two actions: Populate restores fixed demo records; Test executes the predetermined operations.",
                     6,
                 )
+                recorder.chapter = "populate"
                 await page.get_by_role("button", name="Populate", exact=True).click()
                 await recorder.expand(0)
                 await recorder.shot(
                     "populate-preview",
-                    "Populate previews all reads and writes before restoring 2 demo hospitals, 3 roles, 3 staff, and 4 patients.",
+                    "Populate shows INSERT, UPDATE, DELETE, and relationship writes before restoring 2 demo hospitals, 3 roles, 3 staff, and 4 patients.",
                     6,
                 )
                 await (
@@ -432,6 +488,10 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                     "Overview now shows the persisted baseline. Patient counts and care assignment bars come from API responses.",
                     6,
                 )
+                await page.screenshot(
+                    path=str(stage / "dashboard.png"), animations="disabled"
+                )
+                recorder.chapter = "appearance"
                 await page.get_by_role("switch", name="Dark mode", exact=True).click()
                 await page.locator("html[data-theme=dark]").wait_for()
                 await recorder.shot(
@@ -466,8 +526,10 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                         "Patients lists birth dates, hospital membership, and optional clinician assignments.",
                     ),
                 ]:
+                    recorder.chapter = resource.lower()
                     await recorder.nav(resource)
                     await recorder.shot(f"populated-{resource.lower()}", caption)
+                recorder.chapter = "navigation"
                 await page.get_by_role(
                     "combobox", name="Select hospital", exact=True
                 ).select_option(label="[Demo] Riverside Medical Center")
@@ -478,6 +540,7 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                 await page.get_by_role(
                     "combobox", name="Select hospital", exact=True
                 ).select_option("all")
+                recorder.chapter = "testing"
                 await recorder.nav("Testing")
                 await page.get_by_role("button", name="Test", exact=True).click()
                 await recorder.shot(
@@ -538,6 +601,7 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                     "final-hospitals",
                     "Riverside now has its North campus location. Populate can restore the baseline for another identical logical run.",
                 )
+                recorder.chapter = "navigation"
                 await page.get_by_role(
                     "button", name="Refresh records", exact=True
                 ).click()
@@ -579,72 +643,105 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                 )
             finally:
                 await browser.close()
-        # Promote only a fully completed recording. Preserve earlier media for reference.
-        for name in ("screens", "clips"):
-            if (destination / name).exists():
-                shutil.rmtree(destination / name)
-            shutil.move(str(stage / name), str(destination / name))
-        shutil.copyfile(stage / "timeline.json", destination / "timeline.json")
-    process = await asyncio.create_subprocess_exec(
-        sys.executable, str(destination / "render.py")
+        # Render in staging first: a rendering failure cannot replace published media.
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            str(destination / "render.py"),
+            "--timeline",
+            str(stage / "timeline.json"),
+            "--showcases",
+        )
+        if await process.wait():
+            raise RuntimeError(
+                "Rendering failed; previous published media were preserved."
+            )
+        for path in stage.iterdir():
+            target = destination / path.name
+            if target.is_dir():
+                shutil.rmtree(target)
+            elif target.exists():
+                target.unlink()
+            shutil.move(str(path), str(target))
+    publish(destination)
+    print(
+        "Dashboard screenshot, walkthrough, and chapter videos published in docs/vid/."
     )
-    if await process.wait():
-        raise RuntimeError(
-            "Recording succeeded, but rendering failed. Rerun render.py to stitch the captured assets."
-        )
-    (destination / "index.md").write_text("""# Complete dashboard overview
 
-This recording shows the current API-backed dashboard, captured from real UI interactions with the local FastAPI/MySQL stack.
 
-<video controls preload="metadata" width="100%" poster="screens/01-welcome.png">
-  <source src="walkthrough.mp4" type="video/mp4">
-</video>
-
-[Download MP4](walkthrough.mp4) · [Animated GIF](walkthrough.gif) · [Timeline JSON](timeline.json)
-
-The tour covers startup choices, empty Overview, all four CRUD pages and their edit fields, request/SQL previews, search and hospital filtering, individual reads, response JSON, protected deletion, Populate, Testing, playback controls, and verified final records. The JSON lists each screenshot or GIF with its timestamp and caption, plus the capture source and time.
-
-SQL previews are demo examples only. The browser sends HTTP and JSON, never SQL. Dashboard and Swagger require the local project to be running.
-
-## Record again
-
-Use a fresh, empty local instance. The script creates and edits walkthrough records, removes them in dependency order, populates the baseline, and runs the test. It leaves the final test state in MySQL and stops if it finds existing records before starting writes. Install FFmpeg on PATH, then run:
-
-```bash
-uv run --with playwright --with pillow python -m playwright install chromium
-uv run --with playwright --with pillow python docs/vid/capture.py --url http://localhost:3000
-```
-
-Add `--headed` to watch the browser. The script saves source PNGs in `screens/`, the running GIF in `clips/`, and the JSON timeline in this folder, then stitches MP4 and GIF outputs.
-
-To stitch existing captures again without sending requests:
-
-```bash
-uv run --with pillow python docs/vid/render.py
-```
-""")
+def publish(destination: Path) -> None:
     project = destination.parent.parent
-    readme = project / "README.md"
-    if readme.exists():
-        readme.write_text(
-            readme.read_text()
-            .replace(
-                "[Earlier interface media](docs/vid/index.md)",
-                "[Complete dashboard video](docs/vid/index.md)",
-            )
-            .replace(
-                "those archived captures show the previous interface.",
-                "the recording covers the current API-backed interface.",
-            )
+    shutil.copyfile(
+        destination / "dashboard.png", project / "docs/assets/dashboard.png"
+    )
+    for relative, image in [
+        ("README.md", "docs/assets/dashboard.png"),
+        ("docs/index.md", "assets/dashboard.png"),
+    ]:
+        path = project / relative
+        content = path.read_text()
+        start, end = (
+            "<!-- dashboard-capture:start -->",
+            "<!-- dashboard-capture:end -->",
         )
-    navigation = project / "mkdocs.yml"
-    if navigation.exists():
-        navigation.write_text(
-            navigation.read_text().replace(
-                "Earlier interface media: vid/index.md", "Dashboard video: vid/index.md"
-            )
+        before, marked = content.split(start, 1)
+        _, after = marked.split(end, 1)
+        after = after.replace(
+            "; current replacement media have not yet been recorded.", "."
         )
-    print("Complete dashboard recording saved: docs/vid/walkthrough.mp4")
+        after = after.replace(
+            "Replacement recordings are pending capture against the current local stack.",
+            "Watch the overview or choose an individual flow in Showcases.",
+        )
+        path.write_text(
+            before
+            + start
+            + f"\n![HospitalSim dashboard with API-backed metrics and the sidebar theme control]({image})\n"
+            + end
+            + after
+        )
+    titles = {
+        "startup": "Startup choices",
+        "hospitals": "Hospitals",
+        "roles": "Roles",
+        "staff": "Staff",
+        "patients": "Patients",
+        "populate": "Populate demo data",
+        "testing": "Testing and playback",
+        "appearance": "Dark mode and browser theme",
+        "navigation": "Filtering, refresh, and links",
+    }
+    content = [
+        "# Showcases",
+        "",
+        "Captured from the current dashboard connected to FastAPI and MySQL. These interactions write to the local database. SQL previews are demo examples only: the browser sends HTTP and JSON, never SQL.",
+        "",
+        "The startup chapter previews and cancels Pre-populate, then completes Start empty. The Populate chapter confirms the population through Testing; it does not record completing Pre-populate directly from the first-start screen.",
+        "",
+        "## Complete overview",
+        "",
+        '<video controls preload="metadata" width="100%" poster="dashboard.png"><source src="walkthrough.mp4" type="video/mp4"></video>',
+        "",
+        "[MP4](walkthrough.mp4) · [GIF](walkthrough.gif) · [Timestamped JSON](timeline.json)",
+        "",
+    ]
+    for chapter, title in titles.items():
+        content.extend(
+            [
+                f"## {title}",
+                "",
+                f'<video controls preload="none" width="100%"><source src="{chapter}.mp4" type="video/mp4"></video>',
+                "",
+                f"[MP4]({chapter}.mp4) · [GIF]({chapter}.gif) · [Timestamped JSON]({chapter}.json)",
+                "",
+            ]
+        )
+    content.extend(
+        [
+            "See [Recording and rebuilding](recording.md) for capture instructions and the exact flow coverage.",
+            "",
+        ]
+    )
+    (destination / "index.md").write_text("\n".join(content))
 
 
 def main() -> None:

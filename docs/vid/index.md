@@ -1,59 +1,23 @@
-# Earlier interface walkthrough
+# Showcases
 
-This archived 30-second tour shows the earlier browser-only interface. The current dashboard uses the API and MySQL, and its Testing tab replaces those earlier controls. Follow the [current dashboard guide](../dashboard.md) for the current behavior. The original captures and timestamp-based renderer remain available below.
+This section is reserved for recordings of the current dashboard connected to FastAPI and MySQL. The earlier interface video has been removed from this page because it does not represent the current UI. Current recordings and a replacement dashboard screenshot have not yet been captured.
 
-<video controls preload="metadata" width="100%" poster="overview.png">
-  <source src="walkthrough.mp4" type="video/mp4">
-  Your browser can download the video using the link below.
-</video>
+## Flows
 
-[Download MP4](walkthrough.mp4) · [Animated GIF](walkthrough.gif) · [Timeline JSON](timeline.json) · [Original screenshot](overview.png)
+| Showcase | What the recording covers |
+| --- | --- |
+| Startup | Both welcome options, the Pre-populate write preview and cancellation, Start empty confirmation, and the empty dashboard |
+| Hospitals | Create name/location, review POST, edit location and review PATCH, read response JSON, protected deletion, and successful deletion after dependencies are removed |
+| Roles | Create and edit names/descriptions, request previews, individual reads, and deletion after staff references are removed |
+| Staff | Name fields, hospital selection, role checkboxes, create/edit/read previews and responses, and deletion after patient references are removed |
+| Patients | Names, birth date, hospital and optional staff selection, create/edit/read previews and responses, search, and deletion |
+| Populate | Concrete INSERT/UPDATE/DELETE and relationship writes, confirmation, and the verified persisted baseline |
+| Testing | Missing-baseline popup, story and request/SQL review, run, pause, next hour, speed, resume, completion, final records, and end session |
+| Appearance | Visible Dark mode switch, saved manual preference, browser-theme reset, and bottom connection/profile area |
+| Navigation | Sidebar scroll-to-top, hospital filtering, refresh request preview, request log, and documentation/Swagger links |
 
-## Record the complete current dashboard
+The capture script generates a complete overview and separate MP4/GIF videos for these flows. Each video has a JSON timeline with timestamps, file paths, and captions. Once capture and rendering succeed, the generated videos replace this status page and the same dashboard screenshot is added to the README and documentation home.
 
-The [capture script](capture.py) drives the actual current dashboard through its UI and sends requests to the running API. It does not use a mock backend or fabricate screenshots. It requires a fresh, empty local instance and stops before making changes if existing records are found. During capture it creates and edits dedicated walkthrough records, demonstrates protected deletion, removes its temporary records in dependency order, populates the demo, and runs the predefined test. It leaves the final test state in MySQL.
+The welcome Pre-populate preview is recorded without committing that choice. Population is then executed through Testing after the Start empty flow. A separate fresh instance is needed to independently record committing Pre-populate directly from the welcome page; that alternate startup completion is not covered by this single-instance recording.
 
-Start the full stack locally. Install FFmpeg on your PATH, then run from the repository root:
-
-```bash
-uv run --with playwright --with pillow python -m playwright install chromium
-uv run --with playwright --with pillow python docs/vid/capture.py --url http://localhost:3000
-```
-
-Use `--headed` to watch the browser. For Vite, pass `--url http://localhost:5173` with the API running on port 8080. To create a fresh instance with the existing helper, `bash run.sh -d` **deliberately deletes all project Compose volumes and records**; use it only for an instance whose data can be discarded.
-
-The complete recording covers:
-
-1. Welcome choices, initial read/SQL preview, empty Overview, and Test prerequisite popup.
-2. Hospitals: create/edit name and location; Roles: create/edit names and descriptions.
-3. Staff: create/edit names, hospital membership, and role checkboxes.
-4. Patients: create/edit names, birth date, hospital, and optional clinician assignment.
-5. HTTP/JSON and SQL confirmations, search, hospital filtering, single-record reads, and response JSON.
-6. Protected parent deletion (409), then deleting temporary patients, staff, roles, and hospitals in order.
-7. Populate preview, persisted baseline, and all four populated directories.
-8. Test story, ordered requests, SQL modifications, pause/next-hour/speed/resume controls, and an actual running GIF.
-9. Verified final patients, staff roles, and hospital location; Refresh and the documentation/Swagger links.
-10. The bottom connection/profile area, the visible Dark mode switch, and returning to the browser theme. Sidebar navigation also verifies scrolling to the top.
-
-On success, real screenshots go into `screens/`, the running capture into `clips/test-running.gif`, and a new `timeline.json` records timestamps, relative file paths, captions, and capture provenance. The script then stitches a new `walkthrough.mp4` and `walkthrough.gif` with the renderer. No updated recording is claimed until that capture succeeds; the video linked above remains the archived earlier interface until then.
-
-![Captioned HospitalSim dashboard tour](walkthrough.gif)
-
-## Media and timeline
-
-All assets live in `docs/vid/`. The original is a genuine screenshot of the published dashboard. Detail images crop that capture, and the short GIFs zoom into those details. These camera movements do not represent changes to simulation state.
-
-Each entry in `timeline.json` has a `timestamp` in seconds, a `file_path` relative to this folder, and a `caption`. An entry runs until the next timestamp; the final entry runs until `duration`. Animated GIFs play within their allotted interval. The source screenshot is also identified in the JSON.
-
-## Rebuild the video
-
-Install FFmpeg and make `ffmpeg` available on your PATH, then run from the repository root:
-
-```bash
-python -m pip install Pillow
-python docs/vid/render.py
-```
-
-The renderer reads the JSON, stitches the referenced images and GIFs at their timestamps, adds captions, and writes `walkthrough.mp4` and `walkthrough.gif` in the same folder. It does not start or reset the application or database.
-
-To change the sequence, edit the timestamps, captions, and file paths in the JSON and run the renderer again. The first timestamp must be zero and subsequent timestamps must increase strictly. Replace or add media files to include further captured views.
+[Recording and rebuilding](recording.md)
