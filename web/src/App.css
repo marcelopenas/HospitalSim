@@ -33,8 +33,6 @@ button:disabled{opacity:.5}.brand-button{border:0;background:none;text-align:lef
 .theme-toggle[aria-checked=true] .theme-track>span{transform:translateX(13px)}
 .theme-source{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;align-items:center;font-size:10px;line-height:1.6}
 .theme-source small{font-size:10px;opacity:.8}
-.theme-source button{border:0;background:none;padding:3px 0;color:inherit;text-decoration:underline;text-underline-offset:2px;font-size:10px;font-weight:600}
-.theme-source button:disabled{opacity:.6;text-decoration:none}
 .welcome-header .theme-control{width:180px;flex-shrink:0;color:#315f50}
 @media(max-width:900px) and (min-width:601px){
   .sidebar{width:202px;padding:24px 12px 18px}
@@ -63,7 +61,6 @@ button:disabled{opacity:.5}.brand-button{border:0;background:none;text-align:lef
   .profile-identity{padding-bottom:0}
   .theme-toggle{font-size:11px}
   .theme-source{display:block}
-  .theme-source button{display:block}
   .welcome-header .theme-control{width:100%;max-width:240px;margin-left:auto}
 }
 

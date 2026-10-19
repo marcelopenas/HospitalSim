@@ -42,8 +42,18 @@ function Preview({ requests, expanded = false, writesOnly = false }: { requests:
 }
 function Dialog({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null)
+  const backdropPress = useRef(false)
   useEffect(() => { ref.current?.showModal() }, [])
-  return <dialog ref={ref} onCancel={event => { event.preventDefault(); close() }}><div className="modal-heading"><h2>{title}</h2><button type="button" className="icon-button" aria-label="Close dialog" onClick={close}>×</button></div>{children}</dialog>
+  function outside(event: { target: EventTarget; currentTarget: HTMLDialogElement; clientX: number; clientY: number }) {
+    if (event.target !== event.currentTarget) return false
+    const bounds = event.currentTarget.getBoundingClientRect()
+    return event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom
+  }
+  return <dialog ref={ref} onPointerDown={event => { backdropPress.current = event.button === 0 && outside(event) }} onClick={event => {
+    const cancel = backdropPress.current && outside(event)
+    backdropPress.current = false
+    if (cancel) close()
+  }} onCancel={event => { event.preventDefault(); close() }}><div className="modal-heading"><h2>{title}</h2><button type="button" className="icon-button" aria-label="Close dialog" onClick={close}>×</button></div>{children}</dialog>
 }
 const nameOf = (row?: Row) => row ? String(row.name ?? `${row.first_name} ${row.last_name}`) : 'Unassigned'
 function Editor({ resource, row, data, close, save }: { resource: Resource; row?: Row; data: Database; close: () => void; save: (request: Request) => void }) {
@@ -69,12 +79,12 @@ function Editor({ resource, row, data, close, save }: { resource: Resource; row?
     {resource === 'roles' && <p className="muted">Access type A, B, or C is a hospital classification stored with this role. It does not enable authentication or restrict this no-login API.</p>}
     {resource === 'staff' && <p className="muted">Admission is a date only. Last check-in is entered in UTC, including date and time; leave blank if there has been no check-in. Salary uses exact decimal currency units with two decimal places.</p>}
     {resource === 'staff' && row && <p>Transferring staff requires unassigning or reassigning their patients first. The API rejects invalid transfers.</p>}
-    <h3>Request and SQL preview</h3><Preview requests={[request]} expanded/>
+    <h3>Request and SQL preview</h3><Preview requests={[request]}/>
     <div className="modal-actions"><button type="button" className="button secondary" onClick={close}>Cancel</button><button className="button primary" type="submit" disabled={imageBusy || !!imageError}>Review request</button></div>
   </form></Dialog>
 }
 function ThemeControl({ dark, preference, setPreference }: ReturnType<typeof useTheme>) {
-  return <div className="theme-control"><button type="button" className="theme-toggle" role="switch" aria-label="Dark mode" aria-checked={dark} onClick={() => setPreference(dark ? 'light' : 'dark')}><span aria-hidden="true">{dark ? '☾' : '☀'}</span><span>Dark mode</span><span className="theme-track" aria-hidden="true"><span/></span></button><div className="theme-source"><small>{preference === 'system' ? 'Following browser' : 'Saved preference'}</small><button type="button" disabled={preference === 'system'} onClick={() => setPreference('system')}>Use browser theme</button></div></div>
+  return <div className="theme-control"><button type="button" className="theme-toggle" role="switch" aria-label="Dark mode" aria-checked={dark} onClick={() => setPreference(dark ? 'light' : 'dark')}><span aria-hidden="true">{dark ? '☾' : '☀'}</span><span>Dark mode</span><span className="theme-track" aria-hidden="true"><span/></span></button><div className="theme-source"><small>{preference === 'system' ? 'Following browser' : 'Saved preference'}</small></div></div>
 }
 function App() {
   const theme = useTheme()

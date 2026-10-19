@@ -23,6 +23,18 @@ The API serializes staff roles as a `role_ids` list rather than embedding Role o
 
 The dashboard uses these same fields and relationships. There are no bed, department, admission-status, or queue columns. In Testing, an admission is a patient POST, a discharge removes the current patient record with DELETE, and a transfer updates hospital and clinician together with PATCH. See [Architecture](../architecture.md).
 
+## Relational model diagram (MySQL Workbench style)
+
+The conceptual relationships above are complemented by this physical relational diagram. It includes the current MySQL column types, primary/foreign keys, nullability, the composite key in `staff_roles`, and the separate startup metadata table.
+
+![HospitalSim relational model in MySQL Workbench style, with all tables, column types, primary keys, foreign keys, and nullability](../assets/relational-model.svg)
+
+[Open the full-size relational diagram](../assets/relational-model.svg)
+
+Gold keys identify primary-key columns; blue diamonds identify foreign keys. Filled dots mean NOT NULL and open dots mean nullable. Dashed connectors are non-identifying relationships; solid connectors identify the foreign keys that form the join table's composite primary key. Crow's feet indicate many, circles indicate optional participation, and bars indicate one. The `staff_id` relationship on `patient` is optional.
+
+`NUMERIC(12,2)` is stored as MySQL `DECIMAL(12,2)`, and MySQL represents boolean values as `TINYINT(1)`. Capacity limits and the same-hospital clinician rule are enforced by the API; the diagram shows the structural relationships.
+
 ## Application metadata
 
 `app_state` is separate from the domain model. Row 1 stores the boolean `was_initialized` flag used by `/initialization` to remember the startup choice across browsers and restarts. A missing row means false. Startup table creation adds this new table to an existing database without altering domain records.

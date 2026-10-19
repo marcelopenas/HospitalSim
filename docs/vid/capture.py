@@ -493,6 +493,11 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                     path=str(stage / "dashboard.png"), animations="disabled"
                 )
                 recorder.chapter = "appearance"
+                await page.emulate_media(color_scheme="dark")
+                await page.locator("html[data-theme=dark]").wait_for()
+                await recorder.shot("automatic-dark-theme", "Appearance follows the browser automatically until the Dark mode switch is used.", 5)
+                await page.emulate_media(color_scheme="light")
+                await page.locator("html[data-theme=light]").wait_for()
                 await page.get_by_role("switch", name="Dark mode", exact=True).click()
                 await page.locator("html[data-theme=dark]").wait_for()
                 await recorder.shot(
@@ -500,13 +505,11 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                     "The visible Dark mode switch is in the non-clickable local profile. A manual preference is saved in this browser.",
                     6,
                 )
-                await page.get_by_role(
-                    "button", name="Use browser theme", exact=True
-                ).click()
+                await page.get_by_role("switch", name="Dark mode", exact=True).click()
                 await page.locator("html[data-theme=light]").wait_for()
                 await recorder.shot(
-                    "browser-theme",
-                    "Use browser theme restores automatic appearance. Connection details stay in the bottom box, above the no-login profile.",
+                    "light-mode-override",
+                    "The switch returns to light mode and saves that override. Connection details stay in the bottom box, above the no-login profile.",
                     6,
                 )
                 for resource, caption in [

@@ -38,7 +38,7 @@ Compose waits for MySQL readiness and creates missing tables on API startup. The
 - **Overview:** patient records, assigned/unassigned patients, staff, hospital counts, and care assignment bars from API responses.
 - **Hospitals, Roles, Staff, Patients:** create, list, read individual records, edit, and delete. Create hospitals and roles before dependent staff/patients.
 - Choose a hospital or search loaded records without sending extra requests. Sidebar navigation scrolls to the top.
-- Use the visible Dark mode switch in the bottom local-profile area. Appearance follows the browser by default; a manual choice is saved locally, and **Use browser theme** restores automatic behavior.
+- Use the visible Dark mode switch in the bottom local-profile area. Appearance follows the browser by default; the switch reflects the current theme, and toggling it saves a manual override locally. There is no separate browser-theme button.
 - Review the HTTP method, path, JSON payload, and illustrative SQL before sending a request. Successful mutations reload all collections.
 - Use **Refresh records** to load changes made through Swagger or other clients. The request log records responses, failures, and SQL previews.
 

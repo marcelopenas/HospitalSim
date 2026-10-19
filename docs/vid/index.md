@@ -13,7 +13,7 @@ This section is reserved for recordings of the current dashboard connected to Fa
 | Patients | Default profile and optional upload control, names, birth date, hospital and optional staff selection, create/edit/read previews and responses, search, and deletion |
 | Populate | Concrete INSERT/UPDATE/DELETE and relationship writes, confirmation, and the verified persisted baseline |
 | Testing | Missing-baseline popup, story and request/SQL review, run, pause, next hour, speed, resume, completion, final records, and end session |
-| Appearance | Visible Dark mode switch, saved manual preference, browser-theme reset, and bottom connection/profile area |
+| Appearance | Visible Dark mode switch, saved manual preference, automatic browser appearance before a saved override, and bottom connection/profile area |
 | Navigation | Sidebar scroll-to-top, hospital filtering, refresh request preview, request log, and documentation/Swagger links |
 
 The capture script generates a complete overview and separate MP4/GIF videos for these flows. Each video has a JSON timeline with timestamps, file paths, and captions. Once capture and rendering succeed, the generated videos replace this status page and the same dashboard screenshot is added to the README and documentation home.
