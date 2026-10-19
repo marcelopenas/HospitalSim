@@ -198,3 +198,15 @@ test('new demo fields are fixed, images differ, and SQL previews decode BLOB val
   assert.match(sqlFor({ resource: 'patients', method: 'PATCH', id: refs.alex, body: { image_blob: null }, title: 'Reset image' }), /image_blob = FROM_BASE64\('/)
   assert.match(sqlFor({ resource: 'patients', method: 'POST', body: { image_blob: avatars[0] }, title: 'Save image' }), /FROM_BASE64\('/)
 })
+
+test('dashboard GET requests bypass browser caches for reviews and persisted-state checks', async () => {
+  const seen: RequestInit[] = []
+  const fetcher = (async (_url: string, options: RequestInit) => {
+    seen.push(options)
+    return Response.json(options.method === 'GET' ? [] : { id: 1 })
+  }) as typeof fetch
+  for (const request of [...readRequests(), initializationRequest()]) await send(request, '/api', fetcher)
+  assert.ok(seen.every(options => options.cache === 'no-store'))
+  await send({ resource: 'roles', method: 'POST', body: { name: 'Example', access_type: 'A' }, title: '' }, '/api', fetcher)
+  assert.equal(seen.at(-1)!.cache, undefined)
+})

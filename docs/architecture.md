@@ -20,6 +20,10 @@ Each router obtains a SQLModel session, validates fields and references, modifie
 
 **SQL previews are illustrative demo examples, never executable browser input.** The browser sends JSON, not SQL; the backend uses parameterized ORM statements and may execute additional queries. `SQL_ECHO` exposes actual statements in server logs.
 
+## HTTP cache policy
+
+`app/caching.py` applies response policy through FastAPI middleware: private successful reads of roles (300 seconds), hospitals (60 seconds), and staff (15 seconds); patient reads and writes are never stored. Initialization, unlisted routes, and handled HTTP errors also use `no-store`. The dashboard sends all GETs with Fetch `cache: 'no-store'` to keep manual operations and deterministic checks current. The backend has no result cache or additional caching service. See [API cache policy](api/index.md#http-cache-policy).
+
 ## Database-backed startup
 
 `GET /initialization` reads `app_state` row 1, returning `was_initialized=false` when no row exists. The dashboard also loads the four domain collections. If initialized, it opens Overview; otherwise it offers the empty/populated choice. Confirming Start empty or successfully verifying initial population calls `POST /initialization`, which uses a MySQL upsert to save true idempotently. This flag is shared across clients and survives application restarts. GET makes no writes; canceled/failed population does not mark success. A database volume reset clears the flag along with domain data.

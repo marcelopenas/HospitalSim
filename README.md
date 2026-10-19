@@ -67,6 +67,12 @@ The final demo dataset has **2 hospitals, 3 roles, 3 staff, and 5 patients: 4 as
 
 Each request commits independently. One request runs at a time; errors stop execution without automatic retries or rollback of previous steps. Pause allows an in-flight request to finish. Ending a session or reloading the page leaves committed data in MySQL; only the timer/cursor is lost. Initial reads detect changes since the preview, and final reads verify the expected result. Other clients should avoid changing demo records during a run. See the [dashboard guide](docs/dashboard.md).
 
+## HTTP caching
+
+Successful roles GETs allow private browser caching for **5 minutes**, hospitals for **1 minute**, and staff for **15 seconds**. Patient responses, write responses, initialization, and handled HTTP errors use **`Cache-Control: no-store`**. Shared caches cannot store the cacheable CRUD responses. Policy lives centrally in `app/caching.py`.
+
+Dashboard GET requests bypass browser caching so forms, refreshes, and demo state checks read the actual backend immediately. This is HTTP caching policy, not a server-side database/result cache. See [API cache policy](docs/api/index.md#http-cache-policy) for details.
+
 ## Local development
 
 Python 3.14+, uv, Node 24, npm, and an accessible MySQL server are required.

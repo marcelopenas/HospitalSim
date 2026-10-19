@@ -91,6 +91,9 @@ export async function send(request: Request, base = '/api', fetcher: typeof fetc
     response = await fetcher(`${base.replace(/\/$/, '')}${pathOf(request)}`, {
       method: request.method, headers: request.body ? { 'Content-Type': 'application/json' } : undefined,
       body: request.body ? JSON.stringify(request.body) : undefined,
+      // Reviews, post-write refreshes, and demo checks must read the actual backend.
+      // Other API clients can use the server's resource-specific cache lifetimes.
+      cache: request.method === 'GET' ? 'no-store' : undefined,
       signal: AbortSignal.timeout(20000),
     })
   } catch {

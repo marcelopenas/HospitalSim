@@ -6,6 +6,7 @@
 | --- | --- |
 | `app/main.py` | FastAPI setup, router registration, startup table creation, health route |
 | `app/database.py` | SQLModel engine, environment configuration, per-request session |
+| `app/caching.py` | Central HTTP cache policy for successful reads and no-store responses |
 | `app/models/` | Table models and request/response schemas |
 | `app/routers/` | CRUD and relationship checks |
 | `web/src/App.tsx` | Dashboard views, manual forms, request reviews, test controls |

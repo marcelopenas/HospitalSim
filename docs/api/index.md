@@ -17,6 +17,23 @@ Replace `{id}` with the integer resource ID. The actual parameter names are `hos
 
 All create/update payloads are JSON. Successful creates return the new record with status 201; list/read/update responses use 200; deletes use 204 with no body. PATCH applies supplied fields, rather than replacing the record. Lists return JSON arrays without pagination, search, filters, or an ordering guarantee. There is no PUT endpoint.
 
+## HTTP cache policy
+
+Successful collection/item GET responses use these browser-cache lifetimes:
+
+| Resource | Cache-Control | Lifetime |
+| --- | --- | --- |
+| Roles | `private, max-age=300, must-revalidate` | 5 minutes |
+| Hospitals | `private, max-age=60, must-revalidate` | 1 minute |
+| Staff | `private, max-age=15, must-revalidate` | 15 seconds |
+| Patients, including image data | `no-store` | Never store |
+
+Write responses (POST/PATCH/DELETE), initialization, health, unlisted routes, redirects, and handled HTTP errors use `no-store`. The policy is centralized in `app/caching.py` and registered once in `app/main.py`; endpoint functions do not repeat header assignments. Item policies match resolved route templates, including dynamic IDs and requests with query strings.
+
+`private` permits browser storage and excludes shared proxy/CDN caches. `must-revalidate` prevents reuse after the lifetime expires without successful server validation; the API currently returns fresh responses rather than implementing ETags or 304 handling. These headers do not add a server-side result cache: requests reaching FastAPI still execute normal database operations. Other clients can see cached roles/hospitals/staff until their lifetime expires; updating an item does not automatically invalidate every related collection cached by other clients.
+
+The dashboard deliberately uses Fetch `cache: 'no-store'` for every GET, including initial reads, individual reads, post-write refreshes, Populate/Test preflight checks, and final verification. Those actions always reach the backend and do not store patient data or reuse stale browser responses. Clients outside the dashboard can use the lifetimes above. The dashboard's loaded in-memory view and request log remain visible for the current page session; HTTP cache prevention does not erase an already displayed record.
+
 ## Create a complete relationship chain
 
 Create a hospital and role, then staff, then a patient. Example IDs assume a fresh database; always use IDs actually returned by your API.

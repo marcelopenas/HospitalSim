@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.caching import cache_control
 from app.database import create_db_and_tables
 from app.routers import hospitals, initialization, patients, roles, staff
 
@@ -19,6 +20,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.middleware("http")(cache_control)
 
 app.include_router(hospitals.router)
 app.include_router(patients.router)
