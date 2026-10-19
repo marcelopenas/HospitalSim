@@ -1,24 +1,25 @@
+import avatars from './avatars.ts'
 import type { Database, Payload, Refs, Request, Resource, Row } from './api.ts'
 
 export const demoHospitals = [
-  { key: 'riverside', name: '[Demo] Riverside Medical Center', location: '[Demo] Boston, Massachusetts' },
-  { key: 'lakeside', name: '[Demo] Lakeside Clinic', location: '[Demo] Cambridge, Massachusetts' },
+  { key: 'riverside', name: '[Demo] Riverside Medical Center', location: '[Demo] Boston, Massachusetts', capacity: 8 },
+  { key: 'lakeside', name: '[Demo] Lakeside Clinic', location: '[Demo] Cambridge, Massachusetts', capacity: 4 },
 ]
 export const demoRoles = [
-  { key: 'physician', name: '[Demo] Physician', description: 'Provides patient care' },
-  { key: 'nurse', name: '[Demo] Nurse', description: 'Coordinates nursing care' },
-  { key: 'coordinator', name: '[Demo] Shift coordinator', description: 'Coordinates the clinical shift' },
+  { key: 'physician', name: '[Demo] Physician', description: 'Provides patient care', access_type: 'A' },
+  { key: 'nurse', name: '[Demo] Nurse', description: 'Coordinates nursing care', access_type: 'B' },
+  { key: 'coordinator', name: '[Demo] Shift coordinator', description: 'Coordinates the clinical shift', access_type: 'C' },
 ]
 const baselineStaff = [
-  { key: 'olivia', first_name: 'Olivia', last_name: 'Chen', hospital_id: '$riverside', role_ids: ['$physician'] },
-  { key: 'noah', first_name: 'Noah', last_name: 'Patel', hospital_id: '$riverside', role_ids: ['$nurse'] },
-  { key: 'mia', first_name: 'Mia', last_name: 'Brooks', hospital_id: '$lakeside', role_ids: ['$physician'] },
+  { key: 'olivia', date_of_admission: '2022-02-14', last_check_in: '2026-01-12T07:30:00', salary: '7500.10', first_name: 'Olivia', last_name: 'Chen', hospital_id: '$riverside', role_ids: ['$physician'] },
+  { key: 'noah', date_of_admission: '2023-06-01', last_check_in: '2026-01-12T07:45:00', salary: '4800.25', first_name: 'Noah', last_name: 'Patel', hospital_id: '$riverside', role_ids: ['$nurse'] },
+  { key: 'mia', date_of_admission: '2021-09-20', last_check_in: '2026-01-12T08:00:00', salary: '8200.50', first_name: 'Mia', last_name: 'Brooks', hospital_id: '$lakeside', role_ids: ['$physician'] },
 ]
 const baselinePatients = [
-  { key: 'alex', first_name: 'Alex', last_name: 'Taylor', date_of_birth: '1990-05-12', hospital_id: '$riverside', staff_id: '$olivia' },
-  { key: 'sam', first_name: 'Sam', last_name: 'Rivera', date_of_birth: '1985-03-21', hospital_id: '$riverside', staff_id: '$noah' },
-  { key: 'jamie', first_name: 'Jamie', last_name: 'Morgan', date_of_birth: '2000-11-02', hospital_id: '$riverside', staff_id: null },
-  { key: 'casey', first_name: 'Casey', last_name: 'Lee', date_of_birth: '1975-07-19', hospital_id: '$lakeside', staff_id: '$mia' },
+  { key: 'alex', image_blob: avatars.alex, first_name: 'Alex', last_name: 'Taylor', date_of_birth: '1990-05-12', hospital_id: '$riverside', staff_id: '$olivia' },
+  { key: 'sam', image_blob: avatars.sam, first_name: 'Sam', last_name: 'Rivera', date_of_birth: '1985-03-21', hospital_id: '$riverside', staff_id: '$noah' },
+  { key: 'jamie', image_blob: avatars.jamie, first_name: 'Jamie', last_name: 'Morgan', date_of_birth: '2000-11-02', hospital_id: '$riverside', staff_id: null },
+  { key: 'casey', image_blob: avatars.casey, first_name: 'Casey', last_name: 'Lee', date_of_birth: '1975-07-19', hospital_id: '$lakeside', staff_id: '$mia' },
 ]
 export function populationPlan(data: Database): Request[] {
   const ids = new Set(data.hospitals.filter(row => demoHospitals.some(h => h.name === row.name)).map(row => row.id))
@@ -79,11 +80,11 @@ export function baselineRefs(data: Database): Refs | null {
 export function baselineProblems(data: Database): string[] { return inspectBaseline(data).problems }
 export function testPlan(): Request[] {
   return [
-    { hour: 8, resource: 'patients', method: 'POST', title: '08:00 · Admit Avery Stone at Riverside under Olivia Chen.', body: { first_name: 'Avery', last_name: 'Stone', date_of_birth: '1995-01-15', hospital_id: '$riverside', staff_id: '$olivia' } },
+    { hour: 8, resource: 'patients', method: 'POST', title: '08:00 · Admit Avery Stone at Riverside under Olivia Chen.', body: { image_blob: avatars.avery, first_name: 'Avery', last_name: 'Stone', date_of_birth: '1995-01-15', hospital_id: '$riverside', staff_id: '$olivia' } },
     { hour: 9, resource: 'patients', method: 'PATCH', id: '$jamie', title: '09:00 · Assign Jamie Morgan to Noah Patel.', body: { staff_id: '$noah' } },
     { hour: 10, resource: 'patients', method: 'PATCH', id: '$casey', title: '10:00 · Transfer Casey Lee to Riverside and Olivia Chen together.', body: { hospital_id: '$riverside', staff_id: '$olivia' } },
     { hour: 11, resource: 'patients', method: 'DELETE', id: '$sam', title: '11:00 · Discharge Sam Rivera by removing the current patient record.' },
-    { hour: 12, resource: 'patients', method: 'POST', title: '12:00 · Admit Riley Quinn at Lakeside under Mia Brooks.', body: { first_name: 'Riley', last_name: 'Quinn', date_of_birth: '1988-09-23', hospital_id: '$lakeside', staff_id: '$mia' } },
+    { hour: 12, resource: 'patients', method: 'POST', title: '12:00 · Admit Riley Quinn at Lakeside under Mia Brooks.', body: { image_blob: avatars.riley, first_name: 'Riley', last_name: 'Quinn', date_of_birth: '1988-09-23', hospital_id: '$lakeside', staff_id: '$mia' } },
     { hour: 13, resource: 'patients', method: 'PATCH', id: '$alex', title: '13:00 · Clear Alex Taylor’s clinician assignment.', body: { staff_id: null } },
     { hour: 14, resource: 'staff', method: 'PATCH', id: '$mia', title: '14:00 · Give Mia Brooks the additional shift coordinator role.', body: { role_ids: ['$physician', '$coordinator'] } },
     { hour: 15, resource: 'hospitals', method: 'PATCH', id: '$riverside', title: '15:00 · Update Riverside’s location to its North campus.', body: { location: '[Demo] Boston, North campus' } },
@@ -96,8 +97,8 @@ export function finalStateMatches(data: Database, refs: Refs): boolean {
   const ids = new Set([refs.riverside, refs.lakeside])
   const expectedPatients: Payload[] = baselinePatients.filter(p => p.key !== 'sam').map(({ key, ...patient }) => ({ ...patient, ...(key === 'jamie' ? { staff_id: '$noah' } : key === 'casey' ? { hospital_id: '$riverside', staff_id: '$olivia' } : key === 'alex' ? { staff_id: null } : {}) }))
   expectedPatients.push(
-    { first_name: 'Avery', last_name: 'Stone', date_of_birth: '1995-01-15', hospital_id: '$riverside', staff_id: '$olivia' },
-    { first_name: 'Riley', last_name: 'Quinn', date_of_birth: '1988-09-23', hospital_id: '$lakeside', staff_id: '$mia' },
+    { image_blob: avatars.avery, first_name: 'Avery', last_name: 'Stone', date_of_birth: '1995-01-15', hospital_id: '$riverside', staff_id: '$olivia' },
+    { image_blob: avatars.riley, first_name: 'Riley', last_name: 'Quinn', date_of_birth: '1988-09-23', hospital_id: '$lakeside', staff_id: '$mia' },
   )
   return data.patients.filter(row => ids.has(Number(row.hospital_id))).length === 5
     && data.staff.filter(row => ids.has(Number(row.hospital_id))).length === 3

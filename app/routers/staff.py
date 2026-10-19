@@ -47,9 +47,7 @@ def to_read(staff: Staff) -> StaffRead:
 
     return StaffRead(
         id=staff.id,
-        first_name=staff.first_name,
-        last_name=staff.last_name,
-        hospital_id=staff.hospital_id,
+        **staff.model_dump(exclude={"id"}),
         role_ids=sorted(
             role.id for role in staff.roles if role.id is not None
         ),

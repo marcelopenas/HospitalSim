@@ -1,4 +1,5 @@
 """Integration tests for an explicitly configured, disposable MySQL schema."""
+import base64
 import os
 import unittest
 
@@ -38,6 +39,8 @@ class ApiSmokeTests(unittest.TestCase):
         self.addCleanup(self.client.close)
 
     def create(self, resource, payload):
+        defaults = {"/hospitals": {"capacity": 100}, "/roles": {"access_type": "C"}, "/staff": {"date_of_admission": "2024-01-15", "salary": "7500.00"}}
+        payload = {**defaults.get(resource, {}), **payload}
         response = self.client.post(resource, json=payload)
         self.assertEqual(response.status_code, 201, response.text)
         return response.json()
@@ -101,7 +104,7 @@ class ApiSmokeTests(unittest.TestCase):
     def test_reference_conflict_and_date_validation(self):
         a = self.create("/hospitals", {"name": "A", "location": "A City"})
         b = self.create("/hospitals", {"name": "B", "location": "B City"})
-        self.assertEqual(self.client.post("/hospitals", json={"name": "A", "location": "Elsewhere"}).status_code, 409)
+        self.assertEqual(self.client.post("/hospitals", json={"name": "A", "location": "Elsewhere", "capacity": 100}).status_code, 409)
         staff = self.create("/staff", {"first_name": "Pat", "last_name": "Lee", "hospital_id": a["id"]})
         data = {"first_name": "Alex", "last_name": "Taylor", "date_of_birth": "1990-01-01", "hospital_id": b["id"], "staff_id": staff["id"]}
         self.assertEqual(self.client.post("/patients", json=data).status_code, 400)
@@ -115,9 +118,9 @@ class ApiSmokeTests(unittest.TestCase):
         staff = self.create("/staff", {"first_name": "Olivia", "last_name": "Chen", "hospital_id": hospital["id"], "role_ids": [role["id"]]})
         patient = self.create("/patients", {"first_name": "Alex", "last_name": "Taylor", "date_of_birth": "1990-05-12", "hospital_id": hospital["id"], "staff_id": staff["id"]})
         for resource, record, fields in (
-            ("hospitals", hospital, ("name", "location")),
-            ("roles", role, ("name",)),
-            ("staff", staff, ("first_name", "last_name", "hospital_id")),
+            ("hospitals", hospital, ("name", "location", "capacity")),
+            ("roles", role, ("name", "access_type")),
+            ("staff", staff, ("first_name", "last_name", "hospital_id", "date_of_admission", "salary")),
             ("patients", patient, ("first_name", "last_name", "date_of_birth", "hospital_id")),
         ):
             path = f"/{resource}/{record['id']}"
@@ -135,6 +138,58 @@ class ApiSmokeTests(unittest.TestCase):
         self.assertEqual(self.client.patch(f"/patients/{patient['id']}", json={"staff_id": None}).status_code, 200)
         self.assertEqual(self.client.patch(path, json={"hospital_id": destination["id"]}).status_code, 200)
         self.assertEqual(self.client.patch(f"/roles/{role['id']}", json={"description": None}).status_code, 200)
+
+    def test_new_fields_and_blob_round_trip(self):
+        from decimal import Decimal
+
+        from app.images import DEFAULT_IMAGE
+        from app.models.patient import Patient
+        from app.models.staff import Staff
+
+        hospital = self.create("/hospitals", {"name": "Typed hospital", "location": "Typed city", "capacity": 2})
+        role = self.create("/roles", {"name": "Clinician", "access_type": "A"})
+        self.assertEqual(role["access_type"], "A")
+        person = self.create("/staff", {"first_name": "Pat", "last_name": "Lee", "hospital_id": hospital["id"], "salary": "9999999999.99", "date_of_admission": "2020-02-29", "last_check_in": "2026-01-12T08:30:45-03:00"})
+        self.assertEqual(person["salary"], "9999999999.99")
+        self.assertEqual(person["date_of_admission"], "2020-02-29")
+        self.assertEqual(person["last_check_in"], "2026-01-12T11:30:45")
+        image = base64.b64encode(DEFAULT_IMAGE).decode("ascii")
+        patient = self.create("/patients", {"first_name": "Alex", "last_name": "Lee", "hospital_id": hospital["id"], "date_of_birth": "1990-01-01", "image_blob": image})
+        self.assertEqual(patient["image_blob"], image)
+        with Session(self.engine) as session:
+            saved_patient = session.get(Patient, patient["id"])
+            saved_staff = session.get(Staff, person["id"])
+            assert saved_patient is not None and saved_staff is not None
+            self.assertEqual(saved_patient.image_blob, DEFAULT_IMAGE)
+            self.assertEqual(saved_staff.salary, Decimal("9999999999.99"))
+        path = f"/patients/{patient['id']}"
+        self.assertEqual(self.client.patch(path, json={"image_blob": "not base64"}).status_code, 422)
+        self.assertEqual(self.client.patch(path, json={"image_blob": None}).json()["image_blob"], image)
+        self.assertEqual(self.client.patch(f"/staff/{person['id']}", json={"salary": "0.10", "last_check_in": None}).json()["salary"], "0.10")
+        self.assertIsNone(self.client.get(f"/staff/{person['id']}").json()["last_check_in"])
+        for field, value in (("salary", "1.001"), ("salary", "-0.01"), ("date_of_admission", "2024-01-15T08:00:00")):
+            self.assertEqual(self.client.patch(f"/staff/{person['id']}", json={field: value}).status_code, 422)
+        self.assertEqual(self.client.patch(f"/roles/{role['id']}", json={"access_type": "AB"}).status_code, 422)
+
+    def test_hospital_capacity_blocks_admission_transfer_and_shrinking(self):
+        a = self.create("/hospitals", {"name": "Capacity A", "location": "City A", "capacity": 1})
+        b = self.create("/hospitals", {"name": "Capacity B", "location": "City B", "capacity": 1})
+        body = {"first_name": "Alex", "last_name": "Lee", "date_of_birth": "1990-01-01", "hospital_id": a["id"]}
+        patient = self.create("/patients", body)
+        self.assertEqual(self.client.post("/patients", json=body).status_code, 409)
+        # Editing the existing patient in a full hospital does not consume a second slot.
+        path = f"/patients/{patient['id']}"
+        self.assertEqual(self.client.patch(path, json={"first_name": "Alexandra"}).status_code, 200)
+        other = self.create("/patients", {**body, "hospital_id": b["id"]})
+        self.assertEqual(self.client.patch(path, json={"hospital_id": b["id"]}).status_code, 409)
+        self.assertEqual(self.client.get(path).json()["hospital_id"], a["id"])
+        self.assertEqual(self.client.patch(f"/hospitals/{a['id']}", json={"capacity": 0}).status_code, 409)
+        self.assertEqual(self.client.patch(f"/hospitals/{a['id']}", json={"capacity": -1}).status_code, 422)
+        self.assertEqual(self.client.patch(f"/hospitals/{b['id']}", json={"capacity": 2}).status_code, 200)
+        self.assertEqual(self.client.patch(path, json={"hospital_id": b["id"]}).status_code, 200)
+        self.assertEqual(self.client.delete(f"/patients/{other['id']}").status_code, 204)
+        self.assertEqual(self.client.patch(f"/hospitals/{a['id']}", json={"capacity": 0}).status_code, 200)
+        self.assertEqual(self.client.post("/patients", json=body).status_code, 409)
 
 
 

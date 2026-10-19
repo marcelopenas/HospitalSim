@@ -46,6 +46,8 @@ Compose waits for MySQL readiness and creates missing tables on API startup. The
 
 ## Deterministic Testing
 
+Demo hospitals have capacities of 8 and 4. Staff admission dates, UTC check-ins, decimal salaries, role access codes, and patient images are fixed and verified along with the other fields.
+
 **Populate** restores 2 reserved `[Demo]` hospitals, 3 roles, 3 staff, and 4 patients. It deletes and recreates patients and staff inside those two named hospitals, restores their locations and the three reserved role definitions, and leaves other hospitals and their records intact. Do not put records you want to preserve inside the demo hospitals. The main preview shows the concrete INSERT, UPDATE, DELETE, and join-table writes, with values. Supporting GET requests are grouped separately under preflight and verification reads. The entire reset is previewed before confirmation.
 
 **Test** requires the exact baseline. If it is missing or has changed, a popup explains why and offers to review Populate first. Before execution, the test preview explains the story in plain English, lists the HTTP requests, and shows likely SQL changes. It then opens Overview with controls to pause/resume, advance the next hour, change speed, or end the session.
@@ -97,11 +99,13 @@ Frontend variables are embedded **at build time**. Set them in `web/.env.local` 
 
 ## API and data model
 
-Four resources support POST/GET collection and GET/PATCH/DELETE item: `/hospitals`, `/roles`, `/staff`, `/patients`. There is no PUT endpoint. Hospital has `name` and `location`; Role has `name` and optional `description`; Staff has names, `hospital_id`, and `role_ids`; Patient has names, `date_of_birth`, `hospital_id`, and optional `staff_id`. All have generated integer IDs. Staff and roles use the `staff_roles` join table; a shared role remains assigned to every staff member who has it. A separate one-row `app_state` table stores the database-wide `was_initialized` startup flag, without changing the domain models.
+Four resources support POST/GET collection and GET/PATCH/DELETE item: `/hospitals`, `/roles`, `/staff`, `/patients`. There is no PUT endpoint. Hospital has `name`, `location`, and required `capacity` (maximum patients). Role has `name`, optional `description`, and required `access_type` stored as `CHAR(1)` (`A`, `B`, or `C`); this is classification metadata, not authentication. Staff has names, required `date_of_admission` (`DATE`), optional `last_check_in` (`DATETIME(6)`, UTC), required `salary` (`DECIMAL(12,2)`), `hospital_id`, and `role_ids`. Patient has names, `date_of_birth`, `hospital_id`, optional `staff_id`, and `image_blob` (MySQL `BLOB`, base64 in JSON). Salary uses exact decimal strings such as `"7500.10"`, preserving cents. All have generated integer IDs. Staff and roles use the `staff_roles` join table; a shared role remains assigned to every staff member who has it. A separate one-row `app_state` table stores the database-wide `was_initialized` startup flag, without changing the domain models.
 
-A patient and assigned staff member must belong to the same hospital. Referenced deletions and staff transfers with assigned patients return 409. Required PATCH fields reject null with 422; nullable fields can be cleared. Discharge is DELETE, since the model has no admission-status/history field. See the [API guide](docs/api/index.md) and [data model](docs/models/index.md).
+Patients show a default profile in the form and directory; optionally upload a PNG, JPEG, or WebP. Demo profiles have different background colours. The browser prepares small uploads, and the API stores the decoded bytes. Omit an image on PATCH to keep it or use null to restore the default.
 
-`create_all` creates missing tables but does not migrate existing schemas. Existing databases need the role-name uniqueness constraint documented in [Development](docs/development.md). The service has no authentication, pagination, or migration framework.
+A patient and assigned staff member must belong to the same hospital. Admissions/transfers into a full hospital and capacity reductions below its patient count return 409. Referenced deletions and staff transfers with assigned patients return 409. Required PATCH fields reject null with 422; nullable fields can be cleared. Discharge is DELETE, since the model has no admission-status/history field. See the [API guide](docs/api/index.md) and [data model](docs/models/index.md).
+
+`create_all` creates missing tables but does not migrate existing schemas. Existing databases need the new columns and constraints before starting this version; follow [the schema upgrade instructions](docs/development.md#upgrading-an-existing-schema), or deliberately reset with `bash run.sh`. The reset deletes existing data. The service has no authentication, pagination, or migration framework.
 
 ## Checks and documentation
 
@@ -123,7 +127,7 @@ export TEST_DATABASE_URL='mysql+pymysql://TEST_USER:TEST_PASSWORD@localhost:3306
 uv run python -m unittest discover -s tests -v
 ```
 
-The ORM regression test runs without a server and verifies that assigning a shared role to Mia does not remove it from Olivia. MySQL integration tests also cover the persisted startup flag and shared role assignments; they are skipped without `TEST_DATABASE_URL`. The English MkDocs documentation is deployed through the existing GitHub Actions workflow on pushes to `main`. [Showcases](docs/vid/index.md) documents the current UI recording flows. The optional recorder publishes the overview, chapter videos, timestamped JSON, and dashboard image together after a successful capture; current replacement media have not yet been recorded.
+The ORM regression test runs without a server and verifies that assigning a shared role to Mia does not remove it from Olivia. MySQL integration tests also cover capacity limits, date/salary/image round trips, the persisted startup flag, and shared role assignments; they are skipped without `TEST_DATABASE_URL`. The English MkDocs documentation is deployed through the existing GitHub Actions workflow on pushes to `main`. [Showcases](docs/vid/index.md) documents the current UI recording flows. The optional recorder publishes the overview, chapter videos, timestamped JSON, and dashboard image together after a successful capture; current replacement media have not yet been recorded.
 
 ## Repository
 

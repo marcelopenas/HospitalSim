@@ -46,10 +46,10 @@ function logical(data: Database) {
   const hospital = (id: unknown) => data.hospitals.find(row => row.id === id)?.name
   const staff = (id: unknown) => data.staff.find(row => row.id === id)?.first_name ?? null
   return {
-    hospitals: data.hospitals.map(row => [row.name, row.location]),
-    roles: data.roles.map(row => [row.name, row.description]),
-    staff: data.staff.map(row => [row.first_name, hospital(row.hospital_id), (row.role_ids as number[]).map(id => data.roles.find(role => role.id === id)?.name).sort()]),
-    patients: data.patients.map(row => [row.first_name, row.last_name, row.date_of_birth, hospital(row.hospital_id), staff(row.staff_id)]).sort(),
+    hospitals: data.hospitals.map(row => [row.name, row.location, row.capacity]),
+    roles: data.roles.map(row => [row.name, row.description, row.access_type]),
+    staff: data.staff.map(row => [row.first_name, row.date_of_admission, row.last_check_in, row.salary, hospital(row.hospital_id), (row.role_ids as number[]).map(id => data.roles.find(role => role.id === id)?.name).sort()]),
+    patients: data.patients.map(row => [row.first_name, row.last_name, row.date_of_birth, row.image_blob, hospital(row.hospital_id), staff(row.staff_id)]).sort(),
   }
 }
 test('population and test send JSON API requests and repeat the same logical final state', async () => {
@@ -78,9 +78,9 @@ test('population preserves unrelated hospitals, roles, staff, and patients', asy
   const mock = server()
   const execute = (request: Request) => send(request, '/api', mock.fetcher)
   await runRequests([
-    { resource: 'hospitals', method: 'POST', body: { name: 'Custom', location: 'Custom City' }, bind: 'hospital', title: '' },
-    { resource: 'roles', method: 'POST', body: { name: 'Custom role' }, bind: 'role', title: '' },
-    { resource: 'staff', method: 'POST', body: { first_name: 'Pat', last_name: 'Custom', hospital_id: '$hospital', role_ids: ['$role'] }, bind: 'staff', title: '' },
+    { resource: 'hospitals', method: 'POST', body: { name: 'Custom', location: 'Custom City', capacity: 5 }, bind: 'hospital', title: '' },
+    { resource: 'roles', method: 'POST', body: { name: 'Custom role', access_type: 'C' }, bind: 'role', title: '' },
+    { resource: 'staff', method: 'POST', body: { first_name: 'Pat', last_name: 'Custom', date_of_admission: '2024-01-15', last_check_in: null, salary: '1234.56', hospital_id: '$hospital', role_ids: ['$role'] }, bind: 'staff', title: '' },
     { resource: 'patients', method: 'POST', body: { first_name: 'Alex', last_name: 'Custom', date_of_birth: '1990-01-01', hospital_id: '$hospital', staff_id: '$staff' }, title: '' },
   ], {}, execute)
   const saved = structuredClone(mock.data())
@@ -174,4 +174,27 @@ test('baseline diagnostics identify the reported missing Olivia role assignment'
   assert.match(problems[0], /staff Olivia Chen/)
   assert.match(problems[0], /role_ids/)
   assert.match(problems[0], /"role_ids":\[\]/)
+})
+
+test('new demo fields are fixed, images differ, and SQL previews decode BLOB values', async () => {
+  const mock = server()
+  await populate(mock)
+  assert.deepEqual(mock.data().hospitals.map(row => row.capacity), [8, 4])
+  assert.deepEqual(mock.data().roles.map(row => row.access_type), ['A', 'B', 'C'])
+  assert.deepEqual(mock.data().staff.map(row => row.salary), ['7500.10', '4800.25', '8200.50'])
+  for (const row of mock.data().staff) {
+    assert.match(String(row.date_of_admission), /^\d{4}-\d{2}-\d{2}$/)
+    assert.match(String(row.last_check_in), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/)
+  }
+  const avatars = mock.data().patients.map(row => String(row.image_blob))
+  assert.equal(new Set(avatars).size, 4)
+  for (const image of avatars) assert.equal(Buffer.from(image, 'base64').subarray(0, 8).toString('hex'), '89504e470d0a1a0a')
+  const refs = baselineRefs(mock.data())!
+  await runRequests(testPlan(), refs, request => send(request, '/api', mock.fetcher))
+  assert.equal(new Set(mock.data().patients.map(row => row.image_blob)).size, 5)
+  const changed = structuredClone(mock.data())
+  changed.staff[0].salary = '7500.11'
+  assert.equal(finalStateMatches(changed, refs), false)
+  assert.match(sqlFor({ resource: 'patients', method: 'PATCH', id: refs.alex, body: { image_blob: null }, title: 'Reset image' }), /image_blob = FROM_BASE64\('/)
+  assert.match(sqlFor({ resource: 'patients', method: 'POST', body: { image_blob: avatars[0] }, title: 'Save image' }), /FROM_BASE64\('/)
 })

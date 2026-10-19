@@ -1,6 +1,6 @@
 # HospitalSim
 
-HospitalSim is a no-login dashboard for a FastAPI CRUD API backed by MySQL. Manual forms, deterministic population, Testing, and Swagger all operate on the same records.
+HospitalSim is a no-login dashboard for a FastAPI CRUD API backed by MySQL. Manual forms, deterministic population, Testing, and Swagger all operate on the same records. Hospitals have patient capacity limits; staff records include admission dates, check-in times, and exact salaries; roles carry access classifications; patients show default or uploaded profile images.
 
 [Getting started](getting-started.md){ .md-button }
 [Local dashboard](http://localhost:3000){ .md-button }

@@ -1,6 +1,8 @@
 """ORM relationship regressions that do not require a database server."""
 
 import unittest
+from datetime import date
+from decimal import Decimal
 
 from sqlalchemy.orm import class_mapper, configure_mappers
 
@@ -11,11 +13,11 @@ from app.models.staff import Staff, StaffCreate
 class RoleRelationshipTests(unittest.TestCase):
     def test_assigning_a_shared_role_does_not_remove_existing_assignments(self):
         configure_mappers()
-        physician = Role(id=1, name="Physician")
+        physician = Role(id=1, name="Physician", access_type="A")
         staff = []
         for name in ("Olivia", "Mia"):
             person = Staff.model_validate(
-                StaffCreate(first_name=name, last_name="Example", hospital_id=1, role_ids=[1]),
+                StaffCreate(first_name=name, last_name="Example", hospital_id=1, role_ids=[1], date_of_admission=date(2024, 1, 15), salary=Decimal("7500.00")),
                 update={"roles": [physician]},
             )
             staff.append(person)

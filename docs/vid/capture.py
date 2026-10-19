@@ -332,8 +332,9 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                     {
                         "name": "[Capture] Harbor Hospital",
                         "location": "[Capture] Boston",
+                        "capacity": "10",
                     },
-                    "Hospitals: use Create record and enter the hospital name and unique location.",
+                    "Hospitals: enter the name, unique location, and maximum patient capacity.",
                 )
                 hospital_id = observed["hospitals"][0]["id"]
                 hospital = f"[Capture] Harbor Hospital · #{hospital_id}"
@@ -345,7 +346,7 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                 await recorder.create(
                     "Roles",
                     {"name": "[Capture] Clinician", "description": "Patient care"},
-                    "Roles: edit occupation names and optional descriptions. Roles describe work, not access permissions.",
+                    "Roles: enter the name and description and select access type A, B, or C. Access type is a stored classification, not authentication.",
                 )
                 await recorder.edit(
                     "Roles",
@@ -354,8 +355,8 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                 )
                 await recorder.create(
                     "Staff",
-                    {"first name": "Olivia", "last name": "Chen"},
-                    "Staff: enter names, choose a hospital, and check the roles to assign.",
+                    {"first name": "Olivia", "last name": "Chen", "date of admission": "2024-01-15", "last check in (UTC)": "2026-01-12T08:30:00", "salary": "7500.10"},
+                    "Staff: enter admission DATE, UTC check-in date/time, exact salary, names, hospital, and role assignments.",
                     hospital=hospital,
                     role="[Capture] Clinician",
                 )
@@ -372,7 +373,7 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                         "last name": "Taylor",
                         "date of birth": "1990-05-12",
                     },
-                    "Patients: enter names and birth date, select the hospital, and optionally assign staff from that hospital.",
+                    "Patients: enter names and birth date, choose hospital and optional staff, and keep the shown default profile or upload a custom image.",
                     hospital=hospital,
                     clinician=f"Liv Chen · #{staff_id}",
                 )

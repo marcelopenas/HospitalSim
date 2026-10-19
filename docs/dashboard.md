@@ -84,3 +84,12 @@ Confirming the test opens **Overview** with a top control bar. At 1×, a new req
 Manual writes and refresh are disabled during an active test session, including while paused. Hospital filters and navigation remain available. On failure the test stops and preserves the log and committed data. No request is automatically retried: a timed-out write might already have committed. Refresh, inspect, and Populate before rerunning. Other clients should avoid changing demo records during execution; the sequence is not one database transaction.
 
 The timer and cursor are page-session state. Closing or reloading the page stops scheduling further requests, while MySQL retains completed changes. There is no offline catch-up or browser-local data fallback.
+
+## Additional record fields
+
+- **Hospitals:** set maximum patient `capacity` when creating or editing. A full hospital rejects new admissions/transfers; capacity cannot be reduced below the current count.
+- **Staff:** enter admission date without time, optional last check-in including time (UTC), and salary using the numeric input with a 0.01 step. Salary stays a decimal string in the JSON request, preserving cents.
+- **Roles:** choose access type A, B, or C from the dropdown. These are stored hospital classifications; the application still has no login or permission enforcement.
+- **Patients:** the default profile is visible before saving. Upload a custom PNG/JPEG/WebP or use the default. The browser prepares a 256 × 256 JPEG from uploads and sends base64 JSON; the backend stores decoded bytes in a MySQL BLOB. Existing images stay unchanged unless replaced/reset. Demo patients have different coloured backgrounds.
+
+Create/update previews include these values and illustrate BLOB writes with `FROM_BASE64`. SQL is a demo example only; the browser sends HTTP and JSON, never SQL. Salary, image, and date validation errors are returned by the API before any record change is committed.

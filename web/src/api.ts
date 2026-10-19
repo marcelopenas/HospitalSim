@@ -1,3 +1,4 @@
+import { defaultAvatar } from './patientImage.ts'
 export type Resource = 'hospitals' | 'roles' | 'staff' | 'patients'
 export type Row = { id: number; [key: string]: string | number | null | number[] }
 export type Database = Record<Resource, Row[]>
@@ -46,11 +47,15 @@ export function sqlFor(request: Request, writesOnly = false): string {
   const table = tables[request.resource]
   const id = literal(request.id)
   const fields = Object.entries(request.body ?? {}).filter(([key]) => key !== 'role_ids')
+  if (request.resource === 'patients' && request.method === 'POST' && !fields.some(([key]) => key === 'image_blob')) fields.push(['image_blob', defaultAvatar])
+  const sqlValue = (key: string, value: unknown) => key === 'image_blob' ? `FROM_BASE64(${literal(value ?? defaultAvatar)})` : literal(value)
   const checks: string[] = []
   const writes: string[] = []
   if (request.method === 'GET') return `SELECT * FROM ${table}${request.id === undefined ? '' : ` WHERE id = ${id}`};${request.resource === 'staff' ? '\nSELECT staff_id, role_id FROM staff_roles; -- load role assignments' : ''}`
   if (request.method !== 'POST') checks.push(`SELECT * FROM ${table} WHERE id = ${id};`)
   if (request.body?.hospital_id !== undefined) checks.push(`SELECT * FROM hospital WHERE id = ${literal(request.body.hospital_id)};`)
+  if (request.resource === 'patients' && (request.method === 'POST' || request.method === 'PATCH')) checks.push('SELECT capacity FROM hospital WHERE id = :resulting_hospital_id FOR UPDATE;', 'SELECT COUNT(*) FROM patient WHERE hospital_id = :resulting_hospital_id; -- exclude this patient on PATCH; reject if full')
+  if (request.resource === 'hospitals' && request.method === 'PATCH' && request.body?.capacity !== undefined) checks.push(`SELECT COUNT(*) FROM patient WHERE hospital_id = ${id}; -- capacity must cover existing patients`)
   if (request.body?.staff_id != null) checks.push(`SELECT * FROM staff WHERE id = ${literal(request.body.staff_id)}; -- validate same hospital`)
   if (request.resource === 'roles' && request.body?.name) checks.push(`SELECT * FROM role WHERE name = ${literal(request.body.name)}; -- uniqueness check`)
   if (request.resource === 'hospitals' && request.body) checks.push('/* Backend checks unique hospital name and location. */')
@@ -64,8 +69,8 @@ export function sqlFor(request: Request, writesOnly = false): string {
     }
     writes.push(`DELETE FROM ${table} WHERE id = ${id};`)
   } else {
-    if (request.method === 'POST') writes.push(`INSERT INTO ${table} (${fields.map(([key]) => key).join(', ')})\nVALUES (${fields.map(([, value]) => literal(value)).join(', ')});`)
-    else if (fields.length) writes.push(`UPDATE ${table} SET ${fields.map(([key, value]) => `${key} = ${literal(value)}`).join(', ')}\nWHERE id = ${id};`)
+    if (request.method === 'POST') writes.push(`INSERT INTO ${table} (${fields.map(([key]) => key).join(', ')})\nVALUES (${fields.map(([key, value]) => sqlValue(key, value)).join(', ')});`)
+    else if (fields.length) writes.push(`UPDATE ${table} SET ${fields.map(([key, value]) => `${key} = ${sqlValue(key, value)}`).join(', ')}\nWHERE id = ${id};`)
     const roles = request.body?.role_ids
     if (Array.isArray(roles)) {
       const staff = request.method === 'POST' ? ':created_staff_id' : id

@@ -26,11 +26,11 @@ Create a hospital and role, then staff, then a patient. Example IDs assume a fre
 ```bash
 curl -X POST http://localhost:8080/hospitals \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Demo Hospital","location":"Boston"}'
+  -d '{"name":"Demo Hospital","location":"Boston","capacity":100}'
 ```
 
 ```json
-{"id":1,"name":"Demo Hospital","location":"Boston"}
+{"id":1,"name":"Demo Hospital","location":"Boston","capacity":100}
 ```
 
 ### 2. Role
@@ -38,11 +38,11 @@ curl -X POST http://localhost:8080/hospitals \
 ```bash
 curl -X POST http://localhost:8080/roles \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Physician","description":"Provides patient care"}'
+  -d '{"name":"Physician","description":"Provides patient care","access_type":"A"}'
 ```
 
 ```json
-{"id":1,"name":"Physician","description":"Provides patient care"}
+{"id":1,"name":"Physician","description":"Provides patient care","access_type":"A"}
 ```
 
 ### 3. Staff
@@ -50,11 +50,11 @@ curl -X POST http://localhost:8080/roles \
 ```bash
 curl -X POST http://localhost:8080/staff \
   -H 'Content-Type: application/json' \
-  -d '{"first_name":"Olivia","last_name":"Chen","hospital_id":1,"role_ids":[1]}'
+  -d '{"first_name":"Olivia","last_name":"Chen","hospital_id":1,"role_ids":[1],"date_of_admission":"2024-01-15","last_check_in":"2026-01-12T08:30:00","salary":"7500.10"}'
 ```
 
 ```json
-{"id":1,"first_name":"Olivia","last_name":"Chen","hospital_id":1,"role_ids":[1]}
+{"id":1,"first_name":"Olivia","last_name":"Chen","hospital_id":1,"role_ids":[1],"date_of_admission":"2024-01-15","last_check_in":"2026-01-12T08:30:00","salary":"7500.10"}
 ```
 
 ### 4. Patient
@@ -68,6 +68,8 @@ curl -X POST http://localhost:8080/patients \
 ```json
 {"id":1,"first_name":"Alex","last_name":"Taylor","date_of_birth":"1990-05-12","hospital_id":1,"staff_id":1}
 ```
+
+Patient responses also include `image_blob` as base64; it is omitted from the short example above. The API supplies the default icon when the create request omits it. For custom images and reset semantics, see [Patient profile images](../models/patient.md#profile-images).
 
 `staff_id` may be omitted or set to null at patient creation. When supplied, it must identify staff at the patient's hospital. `date_of_birth` is an ISO date strictly before today's UTC date.
 
@@ -98,7 +100,7 @@ Delete dependents first: patients, then staff, then hospitals; remove staff-role
 | --- | --- |
 | 400 | Missing referenced hospital/staff/role; patient and clinician belong to different hospitals |
 | 404 | Requested item ID not found |
-| 409 | Duplicate hospital name/location or role name; protected deletion or staff transfer |
+| 409 | Duplicate hospital name/location or role name; protected deletion/staff transfer; full hospital or capacity below patient count |
 | 422 | Invalid request schema, null required PATCH field, non-positive path ID, empty/overlong string, missing field, or non-past birth date |
 | 500 | Unhandled server/database error; check logs |
 
@@ -112,7 +114,7 @@ FastAPI's 422 response has a structured `detail` array describing field validati
 
 ## Current limitations
 
-There is no authentication, pagination, or server-side list filtering. Testing orchestrates a fixed sequence of CRUD requests from the dashboard; the resulting domain records persist in MySQL, while the timer and execution cursor last only for the current page session. Hospital and role uniqueness are enforced by the router and database for new tables. Required PATCH fields may be omitted but reject explicit null with 422. Only patient `staff_id` and role `description` can be cleared with null; null staff `role_ids` leaves roles unchanged. Every staff update validates its resulting hospital (400 if missing), including when roles are omitted. A transfer with assigned patients returns 409; unassign/reassign them before moving staff. Existing schemas require the role-name constraint described in the development guide.
+There is no authentication, pagination, or server-side list filtering. Testing orchestrates a fixed sequence of CRUD requests from the dashboard; the resulting domain records persist in MySQL, while the timer and execution cursor last only for the current page session. Hospital and role uniqueness are enforced by the router and database for new tables. Required PATCH fields may be omitted but reject explicit null with 422. Patient `staff_id`, staff `last_check_in`, and role `description` can be cleared with null; patient `image_blob: null` restores the default profile; null staff `role_ids` leaves roles unchanged. Every staff update validates its resulting hospital (400 if missing), including when roles are omitted. A transfer with assigned patients returns 409; unassign/reassign them before moving staff. Existing schemas require the columns and constraints in [Upgrading an existing schema](../development.md#upgrading-an-existing-schema).
 
 ## Health endpoint
 
@@ -138,3 +140,7 @@ Every dashboard request has an illustrative SQL preview. **This is a demo exampl
 | POST `/initialization` | Idempotently set the flag true with a MySQL upsert; no request body |
 
 Both return `{"was_initialized": true}` or false as appropriate. This metadata is separate from the four CRUD resources. The dashboard checks it automatically on load, saving true after the empty startup choice or successful population. The flag survives restarts and is shared between browsers; only a database reset clears it. These routes do not populate or delete domain records.
+
+## Exact field types
+
+`capacity` is a required non-negative integer. The API locks the hospital while counting patients; a full hospital cannot accept another patient. `date_of_admission` is required `YYYY-MM-DD`, and `last_check_in` is an optional ISO date/time stored in UTC as DATETIME(6). `salary` is required and limited to DECIMAL(12,2), including a maximum of 9999999999.99 and at most two fractional digits. Prefer a JSON string to avoid floating-point rounding; the response uses exactly two fractional digits. Role `access_type` is required and must be A, B, or C. Patient `image_blob` is optional base64 JSON for PNG/JPEG/WebP, limited to 65535 decoded bytes. Swagger includes these schemas and descriptions.

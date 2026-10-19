@@ -66,3 +66,10 @@ button:disabled{opacity:.5}.brand-button{border:0;background:none;text-align:lef
   .theme-source button{display:block}
   .welcome-header .theme-control{width:100%;max-width:240px;margin-left:auto}
 }
+
+/* Patient BLOBs are rendered as bounded profile thumbnails, never as table text. */
+.patient-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
+.patient-avatar.large { width: 96px; height: 96px; flex-shrink: 0; }
+.image-editor { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+.image-editor > div { flex: 1; min-width: 200px; }
+.image-editor input[type="file"] { max-width: 100%; }

@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from app.database import get_session
 from app.dependencies import commit_or_conflict
@@ -84,7 +84,7 @@ def update_hospital(
     changes: HospitalUpdate,
     session: Annotated[Session, Depends(get_session)],
 ) -> Hospital:
-    hospital = session.get(Hospital, hospital_id)
+    hospital = session.exec(select(Hospital).where(Hospital.id == hospital_id).with_for_update()).first()
     if hospital is None:
         raise HTTPException(status_code=404, detail="Hospital not found")
     data = changes.model_dump(exclude_unset=True)
@@ -105,6 +105,10 @@ def update_hospital(
             status_code=409,
             detail="Hospital name or location already exists",
         )
+    if "capacity" in data:
+        count = session.exec(select(func.count()).select_from(Patient).where(Patient.hospital_id == hospital_id)).one()
+        if data["capacity"] < count:
+            raise HTTPException(status_code=409, detail="Capacity cannot be lower than the current patient count")
     hospital.sqlmodel_update(data)
     session.add(hospital)
     commit_or_conflict(session)

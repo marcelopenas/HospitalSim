@@ -7,6 +7,9 @@ A staff member belongs to a hospital, can have multiple roles, and can be assign
 | `id` | integer | Generated | Primary key |
 | `first_name` | string | Yes | 1–100 characters |
 | `last_name` | string | Yes | 1–100 characters |
+| `date_of_admission` | MySQL DATE | Yes | `YYYY-MM-DD`, with no time component |
+| `last_check_in` | MySQL DATETIME(6) or null | No | UTC date and time; null means no recorded check-in |
+| `salary` | MySQL DECIMAL(12,2) / NUMERIC(12,2) | Yes | 0–9999999999.99; at most 2 decimal places |
 | `hospital_id` | integer | Yes | Existing hospital checked on create and update |
 | `role_ids` | integer array | No | Defaults to `[]`; referenced roles must exist |
 
@@ -18,10 +21,17 @@ A staff member belongs to a hospital, can have multiple roles, and can be assign
 {
   "first_name":"Olivia",
   "last_name":"Chen",
+  "date_of_admission":"2024-01-15",
+  "last_check_in":"2026-01-12T08:30:00",
+  "salary":"7500.10",
   "hospital_id":1,
   "role_ids":[1,2]
 }
 ```
+
+Salary is an exact decimal amount, not a floating-point column. Send a JSON decimal string (for example `"7500.10"`); responses always return a string with two decimal places. Currency and pay period are not prescribed. Invalid precision, negative amounts, and amounts exceeding the column range return 422.
+
+Check-in inputs without an offset are interpreted as UTC. Offset-aware inputs are converted to UTC before storage; read responses omit the offset. Microseconds are retained by DATETIME(6). The dashboard labels the date/time input as UTC. PATCH with `last_check_in: null` clears it, while omission retains it. Admission date and salary are required and reject null.
 
 ## Role updates
 

@@ -1,6 +1,6 @@
 # Architecture
 
-The dashboard, Testing tab, and Swagger all use one FastAPI CRUD API and one MySQL database. The four domain models and join table remain unchanged. One additional infrastructure table, `app_state`, stores the database-wide startup flag.
+The dashboard, Testing tab, and Swagger all use one FastAPI CRUD API and one MySQL database. Four domain models store hospital capacity, staff employment/check-in/pay data, role access classifications, and patient image BLOBs alongside their relationships. One additional infrastructure table, `app_state`, stores the database-wide startup flag.
 
 | Component | Technology | Responsibility |
 | --- | --- | --- |
