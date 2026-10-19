@@ -1,4 +1,4 @@
-# HospitalSim
+# HospitalSim <img src="web/public/favicon.svg" align="right" width="150" alt="Haskllite logo">
 
 A no-login hospital dashboard backed by FastAPI and MySQL. Manage hospitals, roles, staff, and patients manually, or run a predefined sequence of real API operations from **Testing**.
 
