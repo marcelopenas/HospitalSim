@@ -7,9 +7,7 @@ A no-login hospital dashboard backed by a FastAPI CRUD API and MySQL. Manage hos
 > [!IMPORTANT]
 > **Run the project locally before opening the dashboard or Swagger links.** HospitalSim is intended for local use: manual CRUD operations, population, and testing repeatedly create, modify, and delete database records. A shared public instance would be continually changed and reset, making it unsuitable as a stable demo. The project documentation is available online independently.
 
-<!-- dashboard-capture:start -->
-<!-- A current dashboard screenshot is inserted here after successful UI capture. -->
-<!-- dashboard-capture:end -->
+![HospitalSim screenshot](docs/assets/dashboard.png)
 
 ## Start with Docker
 
