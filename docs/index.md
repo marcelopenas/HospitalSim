@@ -1,23 +1,23 @@
 # HospitalSim
 
-HospitalSim is a hospital operations project with two complementary components: a no-login browser dashboard for synthetic scenarios and a FastAPI service for relational CRUD backed by MySQL.
+HospitalSim is a no-login dashboard for a FastAPI CRUD API backed by MySQL. Manual forms, deterministic population, Testing, and Swagger all operate on the same records.
 
-[Open project documentation](https://marcelopenas.github.io/HospitalSim/){ .md-button }
+[Getting started](getting-started.md){ .md-button }
 [Local dashboard](http://localhost:3000){ .md-button }
-[Local Swagger API](http://localhost:8080/docs){ .md-button }
-
-![HospitalSim dashboard showing simulation controls, hospital metrics, and department capacity](assets/dashboard.png)
+[Swagger API](http://localhost:8080/docs){ .md-button }
 
 ## Start here
 
-1. Follow [Getting started](getting-started.md) to launch the dashboard or full stack.
-2. Use the [Dashboard guide](dashboard.md) to run scenarios and understand the metrics.
-3. Explore [API usage](api/index.md) to create hospitals, roles, staff, and patients.
-4. Read the [Data model](models/index.md) for fields and relationships.
-5. See [Development](development.md) for source layout, tests, and documentation builds.
+1. Launch the stack with [Getting started](getting-started.md). A new database starts empty.
+2. On the first startup, choose **Start empty** to add records manually or **Pre-populate** to review the fixed demo baseline. MySQL remembers the completed choice, so refreshes open the dashboard directly.
+3. Use the [Dashboard guide](dashboard.md) for CRUD forms, SQL previews, and the Testing sequence.
+4. Explore [API usage](api/index.md), the [Data model](models/index.md), and [Architecture](architecture.md).
+5. See [Development](development.md) for checks and [Troubleshooting](troubleshooting.md) for connection and validation errors.
 
-## What is simulated?
+## Actual database operations
 
-The website models admissions, department-specific bed capacity, waiting queues, care assignments, and discharges. It contains two fictional hospitals and synthetic patients. A seeded engine makes a fresh scenario reproducible. Each hospital has its own browser-saved state.
+Populate restores two demo hospitals, three roles, three staff, and four patients. Test performs eight predefined CRUD operations and leaves five demo patients, with four assigned to staff. Each request commits to MySQL. The resulting values and relationships are repeatable; generated IDs may change.
 
-The backend stores hospitals, patients, staff, and roles using SQLModel and MySQL. It has no bed or queue tables and no simulation runner. Browser demo actions do not modify the database; Swagger requests do. See [Architecture](architecture.md).
+Every dashboard request has an illustrative SQL preview. **This is a demo example only: the browser sends HTTP and JSON, never SQL.** FastAPI validates input and executes parameterized ORM queries. The preview shows what will probably run, rather than an exact SQL trace.
+
+**`run.sh` deliberately deletes Compose volumes and MySQL records** to create a clean instance. See [Getting started](getting-started.md) for preserving data instead.

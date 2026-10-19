@@ -1,0 +1,57 @@
+/* Native controls, including date pickers, follow the selected color scheme. */
+:root{color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme]){color-scheme:dark;color:#dce8ed;background:#0e1d24}}
+:root[data-theme=dark]{color-scheme:dark;color:#dce8ed;background:#0e1d24}
+:root[data-theme=dark] body{background:#0e1d24}
+[data-theme=dark] h1,[data-theme=dark] h2,[data-theme=dark] h3,
+[data-theme=dark] .metric-value,[data-theme=dark] .simulation-state strong,
+[data-theme=dark] .breadcrumb strong,[data-theme=dark] .person strong{color:#e2edf0}
+[data-theme=dark] .topbar,[data-theme=dark] .panel,[data-theme=dark] .metric-card,
+[data-theme=dark] .simulation-bar,[data-theme=dark] .hospital-select,
+[data-theme=dark] .secondary,[data-theme=dark] .search,
+[data-theme=dark] dialog{background:#192b33;border-color:#334b56;color:#d9e7eb}
+[data-theme=dark] .topbar{border-bottom-color:#334b56}
+[data-theme=dark] input,[data-theme=dark] select{background-color:#13252d;color:#e2edf0;border-color:#405964}
+[data-theme=dark] input::placeholder{color:#98adb5}
+[data-theme=dark] input[type=checkbox]{accent-color:#64c6aa}
+[data-theme=dark] .search input,[data-theme=dark] .hospital-select select{background:transparent}
+[data-theme=dark] dialog input,[data-theme=dark] dialog select,
+[data-theme=dark] dialog fieldset{border-color:#405964}
+[data-theme=dark] .page-heading p,[data-theme=dark] .panel-header p,
+[data-theme=dark] .briefing p,[data-theme=dark] .muted,[data-theme=dark] .metric-label,
+[data-theme=dark] .metric-detail,[data-theme=dark] .simulation-state small,
+[data-theme=dark] .ward-label strong,[data-theme=dark] .ward-label span,
+[data-theme=dark] .top-links,[data-theme=dark] .breadcrumb,
+[data-theme=dark] dialog p,[data-theme=dark] .empty,[data-theme=dark] .page-footer{color:#a7bdc6}
+[data-theme=dark] .eyebrow,[data-theme=dark] .text-button,
+[data-theme=dark] .top-links a:hover{color:#83d7bc}
+[data-theme=dark] th{background:#12242d;border-color:#334b56;color:#a3bbc5}
+[data-theme=dark] td{color:#c1d3da;border-color:#30454e}
+[data-theme=dark] .table-toolbar{border-color:#334b56}
+[data-theme=dark] .request-previews details,[data-theme=dark] .request-log>details{background:#14272f;border-color:#35505a}
+[data-theme=dark] .request-previews summary b{color:#86dfc0}
+[data-theme=dark] .request-previews summary span{color:#a4bdb8}
+[data-theme=dark] .sql-note{background:#17382f!important;color:#c0e2d6!important;border-left-color:#54b596}
+[data-theme=dark] pre{background:#0c1b22;color:#d5eee4}
+[data-theme=dark] .icon-button{color:#b2c7ce}
+[data-theme=dark] .icon-button:hover{background:#2a424b}
+[data-theme=dark] .danger{color:#ffb0a5!important}
+[data-theme=dark] .alert{background:#362f1c;border-color:#71613a;color:#f2d695}
+[data-theme=dark] .alert.error{background:#3a252b;border-color:#79515a;color:#ffbbb1}
+[data-theme=dark] .alert.success{background:#183b30;border-color:#3b7160;color:#b4e6cc}
+[data-theme=dark] .teal,[data-theme=dark] .count-tag,[data-theme=dark] .demo-pill{background:#244439;color:#a4e2c8;border-color:#42695b}
+[data-theme=dark] .blue{background:#233c55;color:#a5ceff}
+[data-theme=dark] .purple{background:#3c3157;color:#d7c1ff}
+[data-theme=dark] .amber{background:#44371e;color:#f2d28e}
+[data-theme=dark] .gray{background:#2d424c;color:#bdd0da}
+[data-theme=dark] .sim-indicator{background:#244137;color:#9ad4c2}
+[data-theme=dark] .track{background:#2c444e}
+[data-theme=dark] .track>div{background:#5fb99f}
+[data-theme=dark] .welcome{background:radial-gradient(ellipse at top right,#153c35,transparent 60%),#0e1d24}
+[data-theme=dark] .welcome-header{background:#142931cc;border-color:#334e55}
+[data-theme=dark] .welcome-header strong{color:#e1f1ea}
+[data-theme=dark] .welcome-header a,[data-theme=dark] .welcome-header .theme-control,
+[data-theme=dark] .welcome-body>details>summary{color:#a7dfc9}
+[data-theme=dark] .welcome-body>p,[data-theme=dark] .welcome-options p{color:#b2c7c0}
+[data-theme=dark] .welcome-options svg{color:#80d1b2}
+[data-theme=dark] .skip-link{background:#213e46;color:#e1f3eb}

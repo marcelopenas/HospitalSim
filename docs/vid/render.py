@@ -10,6 +10,7 @@ import subprocess
 import textwrap
 from itertools import pairwise
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
@@ -73,13 +74,21 @@ def main() -> None:
         returncode = process.wait()
     if returncode:
         raise RuntimeError(f"ffmpeg failed with exit code {returncode}.")
-    subprocess.run(
-        [ffmpeg, "-y", "-loglevel", "error", "-i", str(root / "walkthrough.mp4"),
-         "-filter_complex", ("fps=6,scale=800:-1:flags=lanczos,split[a][b];"
-         "[a]palettegen[p];[b][p]paletteuse"), "-loop", "0",
-         str(root / "walkthrough.gif")],
-        check=True,
-    )
+    # Two passes avoid buffering a complete, multi-minute recording in memory.
+    with TemporaryDirectory(prefix="palette-") as temporary:
+        palette = str(Path(temporary) / "palette.png")
+        filters = "fps=6,scale=800:-1:flags=lanczos"
+        subprocess.run(
+            [ffmpeg, "-y", "-loglevel", "error", "-i", str(root / "walkthrough.mp4"),
+             "-vf", f"{filters},palettegen", "-frames:v", "1", palette],
+            check=True,
+        )
+        subprocess.run(
+            [ffmpeg, "-y", "-loglevel", "error", "-i", str(root / "walkthrough.mp4"),
+             "-i", palette, "-filter_complex", f"[0:v]{filters}[v];[v][1:v]paletteuse",
+             "-loop", "0", str(root / "walkthrough.gif")],
+            check=True,
+        )
     print("Created walkthrough.mp4 and walkthrough.gif from timeline.json")
 
 

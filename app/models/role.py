@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import relationship
@@ -24,9 +22,11 @@ class RoleBase(SQLModel):
 class Role(RoleBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
+    # The native collection annotation prevents shared roles being inferred as scalar.
     staff: list[Staff] = Relationship(
         sa_relationship=relationship(
-            "Staff", secondary="staff_roles", back_populates="roles", passive_deletes=True
+            "Staff", secondary="staff_roles", back_populates="roles", passive_deletes=True,
+            uselist=True,
         ),
     )
 

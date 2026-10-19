@@ -2,7 +2,7 @@
 
 The API is available at `http://localhost:8080` in the default Compose setup. There is **no `/api` prefix**. [Swagger UI](http://localhost:8080/docs), [ReDoc](http://localhost:8080/redoc), and the [OpenAPI schema](http://localhost:8080/openapi.json) describe the running service.
 
-Swagger's **Try it out** sends real requests and changes MySQL records. It does not change the browser simulation.
+Swagger's **Try it out**, the dashboard, and Testing all use these same endpoints and MySQL records. Use **Refresh records** in the dashboard to load changes made through Swagger or another client. The frontend's `/api` URL is a reverse-proxy prefix, stripped before requests reach FastAPI.
 
 ## Resources and methods
 
@@ -112,7 +112,7 @@ FastAPI's 422 response has a structured `detail` array describing field validati
 
 ## Current limitations
 
-There is no authentication, pagination, filtering, or backend simulation state. Hospital and role uniqueness are enforced by the router and database for new tables. Required PATCH fields may be omitted but reject explicit null with 422. Only patient `staff_id` and role `description` can be cleared with null; null staff `role_ids` leaves roles unchanged. Every staff update validates its resulting hospital (400 if missing), including when roles are omitted. A transfer with assigned patients returns 409; unassign/reassign them before moving staff. Existing schemas require the role-name constraint described in the development guide.
+There is no authentication, pagination, or server-side list filtering. Testing orchestrates a fixed sequence of CRUD requests from the dashboard; the resulting domain records persist in MySQL, while the timer and execution cursor last only for the current page session. Hospital and role uniqueness are enforced by the router and database for new tables. Required PATCH fields may be omitted but reject explicit null with 422. Only patient `staff_id` and role `description` can be cleared with null; null staff `role_ids` leaves roles unchanged. Every staff update validates its resulting hospital (400 if missing), including when roles are omitted. A transfer with assigned patients returns 409; unassign/reassign them before moving staff. Existing schemas require the role-name constraint described in the development guide.
 
 ## Health endpoint
 
@@ -125,3 +125,16 @@ curl http://localhost:8080/health
 ```
 
 This confirms the process responds; it does not execute a database readiness query.
+
+## Dashboard SQL previews
+
+Every dashboard request has an illustrative SQL preview. **This is a demo example: the browser sends HTTP and JSON, never SQL.** The backend validates requests and executes parameterized SQLModel/SQLAlchemy queries. Previews show likely checks, writes, and relationship changes, rather than exact SQL text or execution order. Enable `SQL_ECHO=true` and inspect API logs to see actual statements.
+
+## Dashboard initialization
+
+| Endpoint | Behavior |
+| --- | --- |
+| GET `/initialization` | Read the MySQL startup flag; no row means false; does not mutate data |
+| POST `/initialization` | Idempotently set the flag true with a MySQL upsert; no request body |
+
+Both return `{"was_initialized": true}` or false as appropriate. This metadata is separate from the four CRUD resources. The dashboard checks it automatically on load, saving true after the empty startup choice or successful population. The flag survives restarts and is shared between browsers; only a database reset clears it. These routes do not populate or delete domain records.

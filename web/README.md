@@ -1,53 +1,39 @@
-# HospitalSim web dashboard
+# HospitalSim dashboard
 
-An English, responsive React 19 + TypeScript dashboard built with Vite. It runs a hospital operations simulation entirely in the browser, with no login, database, or external assets required.
+An English React/TypeScript dashboard for the FastAPI CRUD API and MySQL. There is no login or browser-local data fallback.
 
-## Run and build
+## Run
 
-Use Node.js 24 and npm:
+Start the API on port 8080 with a MySQL connection, then:
 
 ```bash
 npm ci
 npm run dev
-npm test
-npm run build
-npm run preview
 ```
 
-Vite prints the development URL, usually http://localhost:5173. `npm run build` checks TypeScript and produces `dist/`. The provided Dockerfile builds the same output with `npm ci` and serves it through Nginx on port 80 (mapped to port 3000 by root Compose).
+Vite normally serves http://localhost:5173 and proxies `/api` to `http://127.0.0.1:8080`. `npm run preview` uses the same proxy after `npm run build`. The Compose frontend uses Nginx to forward `/api` to `web:8080`.
 
-## Features
+On load, GET `/initialization` checks a MySQL flag. The welcome page offers an empty start or reviewed population once per database; POST `/initialization` remembers a completed choice across reloads and browsers. Population previews foreground concrete writes, with supporting reads grouped separately. Overview shows real API counts and care assignments. Hospitals, Roles, Staff, and Patients have manual CRUD forms. Testing has a deterministic Populate baseline and an eight-step Test that commits actual API changes. Test previews explain the operations and expected final state before execution. Its running controls appear on Overview.
 
-- Overview: current patient and bed counts, staffing, department capacity, patient-flow chart, and activity feed.
-- Patients: search, status filters, manual admission, and discharge with automatic queue promotion.
-- Staff & roles: representative clinicians, care roles, departments, and current patient assignments.
-- Hospitals: two independent, fictional hospital scenarios.
-- Simulation: run/pause, 1×/2×/4× speeds, +1 hour, normal/surge/critical demand, and confirmed reset.
-- Persistent top links to the project documentation and Swagger.
-
-State is saved under `hospitalsim.demo.v1` in local storage. The simulation starts paused after refresh. If storage fails, the session continues in memory. It does not communicate with the REST API; opening Swagger is the path to database-backed CRUD. Use synthetic patient names only.
+Every request has illustrative SQL with the explicit notice that **this is a demo example, the browser sends HTTP and JSON, never SQL**, and actual backend statements may differ. Search/hospital filters send no requests. The request log and test cursor live only for the page session; domain records persist in MySQL.
 
 ## Configuration
 
-Copy `.env.example` to `.env.local` if you need a custom Swagger link:
+`VITE_API_URL` defaults to `/api`. `VITE_SWAGGER_URL` defaults to `http://<browser hostname>:8080/docs` (or `<absolute API URL>/docs` when an absolute API base is configured). Set these public build-time values in `web/.env.local` for Vite or root `.env` for Compose and rebuild/restart. Never include credentials. External API hosting requires a same-origin proxy or explicit backend CORS configuration. Static frontend publishing does not host FastAPI or MySQL.
 
-```dotenv
-VITE_SWAGGER_URL=https://your-api.example/docs
+## Files and checks
+
+| File | Responsibility |
+| --- | --- |
+| `src/api.ts` | Typed request execution, HTTP errors, response updates, SQL examples |
+| `src/demo.ts` | Fixed fixtures, population/test plans, baseline/final checks |
+| `src/App.tsx` | Startup choices, CRUD forms, previews, dashboard, test scheduling |
+| `tests/api-demo.test.ts` | Mock HTTP contract and deterministic workflow checks |
+
+```bash
+npm test
+npm run lint
+npm run build
 ```
 
-By default, Swagger opens `http://<current browser hostname>:8080/docs`. This must be reachable from the visitor's browser. The documentation link is `https://marcelopenas.github.io/HospitalSim/`.
-
-Vite embeds `VITE_` variables in public JavaScript at build time. Never put credentials in them. For Docker, set root `.env`'s `VITE_SWAGGER_URL` and rebuild the frontend; setting a runtime Nginx environment variable does not rebuild static files.
-
-## Source map and behavior
-
-| File | Purpose |
-| --- | --- |
-| `src/App.tsx` | Navigation, dashboard views, forms, timer, and persistence |
-| `src/simulation.ts` | Types, seeded fixtures, arrivals, discharges, queues, and history |
-| `src/App.css`, `src/index.css` | Responsive layout and visual design |
-| `tests/simulation.test.ts` | Node's built-in tests for the pure simulation engine |
-
-New arrivals receive a department, a lead clinician, and a 60–479 minute stay. A 15-minute step completes eligible stays, assigns waiting patients to freed beds, and adds 1–3, 4–6, or 7–9 arrivals according to the scenario. Staff totals are fixed inputs. The chart uses cumulative counters and up to 25 points; up to 40 activity events and 200 discharged records are retained after stepping. See the [simulation guide](../docs/dashboard.md) for exact metrics and constraints.
-
-The UI uses native buttons, labeled inputs, a keyboard-accessible navigation menu, a skip link, live action feedback, and modal dialogs with browser-managed focus. CSS adapts to narrow screens and respects reduced-motion preferences.
+See the [dashboard guide](../docs/dashboard.md) for the baseline, operation schedule, final state, and interruption behavior. The existing data model has no beds, queues, or discharge history; discharge in the test removes the current patient record with DELETE.

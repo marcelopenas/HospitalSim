@@ -1,27 +1,41 @@
 # Architecture
 
-HospitalSim has a browser simulation and a separate database-backed API. They share a hospital domain, but they do not synchronize records.
+The dashboard, Testing tab, and Swagger all use one FastAPI CRUD API and one MySQL database. The four domain models and join table remain unchanged. One additional infrastructure table, `app_state`, stores the database-wide startup flag.
 
-| Component | Technology | Responsibility | Data lifetime |
-| --- | --- | --- | --- |
-| Dashboard | React, TypeScript, Vite | Views, controls, synthetic scenarios | Browser local storage |
-| Simulation engine | Pure TypeScript functions | Seeded arrivals, bed allocation, queues, discharges | Part of dashboard state |
-| Static server | Nginx | Serve the built dashboard and SPA fallback | Built files |
-| API | FastAPI, SQLModel | Validation and CRUD for four resources | MySQL records |
-| Database | MySQL 8.4 in Compose | Relational persistence and foreign keys | Named Docker volume |
-| Documentation | MkDocs Material | Guides and data/API reference | Markdown source and GitHub Pages |
+| Component | Technology | Responsibility |
+| --- | --- | --- |
+| Dashboard | React, TypeScript, Vite | API-backed views, manual CRUD forms, request/SQL previews |
+| Test plans | `web/src/demo.ts` | Fixed fixtures, ordered CRUD operations, baseline/final checks |
+| HTTP client | `web/src/api.ts` | HTTP/JSON requests, errors, response updates, illustrative SQL |
+| Frontend server | Nginx in Compose; Vite locally | Serve assets and proxy `/api/*` to FastAPI |
+| API | FastAPI, SQLModel | Validate requests and execute CRUD transactions |
+| Database | MySQL 8.4 | Persist hospitals, roles, staff, patients, and staff-role links |
+| Documentation | MkDocs Material | English guides and API/model reference |
 
-## Browser path
+## Request path
 
-`src/App.tsx` manages navigation, forms, an interval timer, and local storage. It calls pure functions in `src/simulation.ts`, which return new state without mutating their input. A seeded generator supplies repeatable fixtures and random arrivals. CSS and inline SVG draw the interface and chart without external image or font services.
+A dashboard action shows its method, path, JSON, and SQL example before confirmation. The browser sends HTTP to `/api/patients`, for example; the same-origin proxy strips `/api` and forwards `/patients` to FastAPI. Nginx uses Compose's `web:8080`; Vite development/preview use `127.0.0.1:8080`. FastAPI paths retain no `/api` prefix. Swagger's direct default address is port 8080.
 
-The frontend Docker image runs an npm build in a Node 24 stage, then copies `dist/` into Nginx. No Python or database connection is needed to use the dashboard. `VITE_SWAGGER_URL` is embedded at build time and used only as a navigation link.
+Each router obtains a SQLModel session, validates fields and references, modifies model instances, commits, and returns a declared response schema. The dashboard updates from successful responses and reloads collections after manual mutations, population, and completion of a test. There is no polling or synchronization with other clients; use Refresh to read their changes.
 
-## API path
+**SQL previews are illustrative demo examples, never executable browser input.** The browser sends JSON, not SQL; the backend uses parameterized ORM statements and may execute additional queries. `SQL_ECHO` exposes actual statements in server logs.
 
-Each router receives a SQLModel session through `get_session`, queries or modifies model instances, commits changes, and returns a declared response model. Hospitals, staff, and patients are related through foreign keys; staff and roles are joined through `staff_roles`.
+## Database-backed startup
 
-The FastAPI lifespan function calls `SQLModel.metadata.create_all` on startup. The engine is created from the required `DATABASE_URL` environment variable, which must use `mysql+pymysql`; MySQL is the only supported database. Compose waits for the database healthcheck before starting the API; `/health` itself reports process health only.
+`GET /initialization` reads `app_state` row 1, returning `was_initialized=false` when no row exists. The dashboard also loads the four domain collections. If initialized, it opens Overview; otherwise it offers the empty/populated choice. Confirming Start empty or successfully verifying initial population calls `POST /initialization`, which uses a MySQL upsert to save true idempotently. This flag is shared across clients and survives application restarts. GET makes no writes; canceled/failed population does not mark success. A database volume reset clears the flag along with domain data.
 
-There is no `/api` prefix, authentication, authorization, CORS middleware, pagination, or migration framework. Swagger is supplied by FastAPI at `/docs`. Cross-origin browser API integration would require additional configuration, error handling, and deliberate mapping between the simulation domain and persisted entities.
+## Deterministic orchestration
 
+Populate resets only patients/staff in the two reserved named demo hospitals and restores their hospital/role definitions. Test requires that baseline and sends eight fixed mutations in order. Created IDs are taken from API responses. Resulting domain values and relationships are deterministic; auto-increment IDs may differ.
+
+The test scheduler waits for one response before scheduling another request. Each operation commits independently and remains saved after interruption. Baseline/final checks use API collection reads; a preflight fingerprint catches changes since the confirmation preview. This is not a distributed lock, and other clients must not edit demo records during execution. There is no additional simulation model, server-side scheduler, or separate demo database.
+
+The initialization flag lives in MySQL. The browser stores only loaded API responses, navigation, pending forms, the request log, and the current test cursor in memory. It does not persist domain records in local storage or invent fallback data. Reloading loses the execution cursor but retains MySQL changes.
+
+## Deployment and persistence
+
+The frontend image builds with Node 24 and serves static output in Nginx. `VITE_API_URL` defaults to `/api`; `VITE_SWAGGER_URL` configures the Swagger link. Both are public build-time settings. Static hosting alone cannot run FastAPI/MySQL. A separately hosted frontend needs an accessible API and a reverse proxy or explicit backend CORS configuration.
+
+FastAPI's lifespan creates missing SQLModel tables. `DATABASE_URL` must use `mysql+pymysql`; MySQL is the only supported database. Compose waits for database readiness before API startup. `/health` reports process health, not a database query.
+
+There is no authentication, pagination, or migration framework. `create_all` does not migrate existing tables. The `db-data` volume preserves records across normal restarts; **`run.sh` deliberately removes project volumes** to create a clean empty instance.

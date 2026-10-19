@@ -21,4 +21,8 @@ erDiagram
 
 The API serializes staff roles as a `role_ids` list rather than embedding Role objects. Relationships are not recursively included in read responses.
 
-Browser departments, beds, queue statuses, and simulated stays are separate frontend concepts, not columns in this schema. See [Architecture](../architecture.md).
+The dashboard uses these same fields and relationships. There are no bed, department, admission-status, or queue columns. In Testing, an admission is a patient POST, a discharge removes the current patient record with DELETE, and a transfer updates hospital and clinician together with PATCH. See [Architecture](../architecture.md).
+
+## Application metadata
+
+`app_state` is separate from the domain model. Row 1 stores the boolean `was_initialized` flag used by `/initialization` to remember the startup choice across browsers and restarts. A missing row means false. Startup table creation adds this new table to an existing database without altering domain records.

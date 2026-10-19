@@ -42,6 +42,31 @@ class ApiSmokeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 201, response.text)
         return response.json()
 
+    def test_initialization_is_idempotent_and_persists_between_clients(self):
+        self.assertEqual(self.client.get("/initialization").json(), {"was_initialized": False})
+        for _ in range(2):
+            response = self.client.post("/initialization")
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.json(), {"was_initialized": True})
+        other = TestClient(self.client.app)
+        try:
+            self.assertEqual(other.get("/initialization").json(), {"was_initialized": True})
+            self.assertEqual(other.get("/hospitals").json(), [])
+        finally:
+            other.close()
+
+    def test_multiple_staff_keep_a_shared_role_after_new_assignments(self):
+        hospital = self.create("/hospitals", {"name": "Shared role hospital", "location": "Shared city"})
+        role = self.create("/roles", {"name": "Physician"})
+        people = []
+        for name in ("Olivia", "Mia"):
+            people.append(self.create("/staff", {"first_name": name, "last_name": "Example", "hospital_id": hospital["id"], "role_ids": [role["id"]]}))
+        for person in people:
+            self.assertEqual(self.client.get(f"/staff/{person['id']}").json()["role_ids"], [role["id"]])
+        self.client.patch(f"/staff/{people[1]['id']}", json={"role_ids": []})
+        self.assertEqual(self.client.get(f"/staff/{people[0]['id']}").json()["role_ids"], [role["id"]])
+
+
     def test_health_and_documentation(self):
         self.assertEqual(self.client.get("/health").json(), {"status": "ok"})
         self.assertEqual(self.client.get("/docs").status_code, 200)

@@ -1,207 +1,141 @@
 # HospitalSim
 
-An interactive hospital operations sandbox, backed by a separate FastAPI CRUD service and a relational MySQL database. Explore patient flow, department capacity, and care assignments in an English dashboard with no login.
+A no-login hospital dashboard backed by a FastAPI CRUD API and MySQL. Manage hospitals, roles, staff, and patients manually, or run a fixed sequence of real API operations from the **Testing** tab.
 
-[Project documentation](https://marcelopenas.github.io/HospitalSim/) · [Local dashboard](http://localhost:3000) · [Local Swagger UI](http://localhost:8080/docs)
+[Documentation](https://marcelopenas.github.io/HospitalSim/) · [Local dashboard](http://localhost:3000) · [Swagger UI](http://localhost:8080/docs)
 
-![HospitalSim dashboard showing simulation controls, hospital metrics, and department capacity](docs/assets/dashboard.png)
+> [!IMPORTANT]
+> **Run the project locally before opening the dashboard or Swagger links.** HospitalSim is intended for local use: manual CRUD operations, population, and testing repeatedly create, modify, and delete database records. A shared public instance would be continually changed and reset, making it unsuitable as a stable demo. The project documentation is available online independently.
 
-## What you can do
+## Start with Docker
 
-- Switch between two fictional hospitals, each with independent simulation progress.
-- Run or pause a seeded simulation, select normal operations, patient surge, or critical demand, change speed, and advance one simulated hour.
-- Monitor active patients, bed occupancy, staffing, department capacity, admissions, discharges, and an activity feed.
-- Admit synthetic patients, search and filter records, discharge patients, and observe waiting patients take newly available beds in their department.
-- Inspect named clinicians, care roles, assignments, and hospital summaries.
-- Open documentation and Swagger directly from the top navigation.
-- Create, read, update, and delete hospital, role, staff, and patient records through the API.
-
-**Data boundary:** the website is a self-contained browser simulation. Its records and metrics are synthetic and saved in this browser's local storage, independently of MySQL. It does not read or write API records. Swagger operates on the real API database. Department, bed, queue, and simulation data are frontend concepts, not fields in the existing backend schema. No authentication is implemented in either component; use synthetic data in a trusted development environment.
-
-## Quick start: dashboard only
-
-Requires Node.js 24 (matching the frontend Docker build) and npm.
-
-```bash
-cd web
-npm ci
-npm run dev
-```
-
-Open the URL printed by Vite (usually http://localhost:5173). The dashboard works without Python, Docker, or a database. Swagger requires the backend to be running.
-
-## Quick start: full stack with Docker
-
-Requires Docker Engine or Docker Desktop with Compose v2.
+Requires Docker Engine/Desktop and Compose v2.
 
 ```bash
 cp .env.example .env
-# Review .env and change its local development passwords as needed.
+# Set local database passwords in .env.
 docker compose up --build
 ```
 
-**`bash run.sh` deliberately deletes the project's Compose volumes and all MySQL API records**, then rebuilds a clean instance. This is intentional for repeatable development and demonstrations. It exports `requirements.txt` with uv and creates `.env` from the example when missing. `bash run.sh -d` performs the same reset in the background. To preserve records, use `docker compose down` followed by `docker compose up --build` instead. Browser-local demo progress is separate; reset it in the dashboard.
+Open http://localhost:3000. A new database has no domain records. On load, the dashboard checks `GET /initialization` and reads the four collections. The full-screen welcome page offers **Start empty** or **Pre-populate** only until that choice is completed. `POST /initialization` saves the choice in MySQL; refreshes and other browsers then open the dashboard directly. Starting empty preserves existing records. Pre-populate shows the planned writes immediately and marks initialization only after the baseline is verified.
 
-| Service | Address | Purpose |
-| --- | --- | --- |
-| Dashboard | http://localhost:3000 | No-login browser simulation |
-| Swagger UI | http://localhost:8080/docs | Interactive API requests |
-| ReDoc | http://localhost:8080/redoc | Read-only API reference |
-| OpenAPI schema | http://localhost:8080/openapi.json | Machine-readable API contract |
-| Health | http://localhost:8080/health | Process health; returns `{"status":"ok"}` |
+**`bash run.sh` deliberately deletes all project Compose volumes and MySQL records** before rebuilding a clean instance. This reset is intentional for repeatable development and demonstrations. The script exports `requirements.txt` with uv and creates `.env` from the example when missing. `bash run.sh -d` also resets the database. To preserve records, use `docker compose down` and `docker compose up --build` without `-v`.
 
-The API waits for MySQL readiness, then creates missing SQLModel tables on startup. The database starts empty; the browser demo has its own fixtures. MySQL uses a named `db-data` volume and is not exposed on a host port by the default Compose configuration.
+| Service | Address |
+| --- | --- |
+| Dashboard | http://localhost:3000 |
+| Swagger UI | http://localhost:8080/docs |
+| ReDoc | http://localhost:8080/redoc |
+| OpenAPI schema | http://localhost:8080/openapi.json |
+| Process health | http://localhost:8080/health |
 
-```bash
-docker compose logs -f web
-# Stop services while retaining database records:
-docker compose down
-```
+Compose waits for MySQL readiness and creates missing tables on API startup. The MySQL port is internal to Compose; records live in the `db-data` volume. The dashboard's `/api/*` requests are proxied by Nginx to FastAPI, with `/api` stripped. FastAPI itself keeps its original paths, such as `/patients`.
 
-Deleting `db-data` erases API records. Do so only when you intentionally want a fresh database. Changing the `.env` MySQL credentials does not change users already stored in an existing volume.
+## Manual operations
 
-## Local backend development
+- **Overview:** patient records, assigned/unassigned patients, staff, hospital counts, and care assignment bars from API responses.
+- **Hospitals, Roles, Staff, Patients:** create, list, read individual records, edit, and delete. Create hospitals and roles before dependent staff/patients.
+- Choose a hospital or search loaded records without sending extra requests. Sidebar navigation scrolls to the top.
+- Use the visible Dark mode switch in the bottom local-profile area. Appearance follows the browser by default; a manual choice is saved locally, and **Use browser theme** restores automatic behavior.
+- Review the HTTP method, path, JSON payload, and illustrative SQL before sending a request. Successful mutations reload all collections.
+- Use **Refresh records** to load changes made through Swagger or other clients. The request log records responses, failures, and SQL previews.
 
-Python 3.14+ and [uv](https://docs.astral.sh/uv/) are required by `pyproject.toml`. Use an accessible MySQL instance and create the database and user before startup.
+**SQL previews are demo examples only. The browser sends HTTP requests and JSON, never SQL.** The server validates input and uses parameterized ORM queries. The preview approximates checks, statements, and relationship changes; it is not an exact execution log. `SQL_ECHO=true` enables actual backend SQL logging.
+
+## Deterministic Testing
+
+**Populate** restores 2 reserved `[Demo]` hospitals, 3 roles, 3 staff, and 4 patients. It deletes and recreates patients and staff inside those two named hospitals, restores their locations and the three reserved role definitions, and leaves other hospitals and their records intact. Do not put records you want to preserve inside the demo hospitals. The main preview shows the concrete INSERT, UPDATE, DELETE, and join-table writes, with values. Supporting GET requests are grouped separately under preflight and verification reads. The entire reset is previewed before confirmation.
+
+**Test** requires the exact baseline. If it is missing or has changed, a popup explains why and offers to review Populate first. Before execution, the test preview explains the story in plain English, lists the HTTP requests, and shows likely SQL changes. It then opens Overview with controls to pause/resume, advance the next hour, change speed, or end the session.
+
+| Time | Operation |
+| --- | --- |
+| 08:00 | Admit Avery Stone at Riverside under Olivia Chen |
+| 09:00 | Assign Jamie Morgan to Noah Patel |
+| 10:00 | Transfer Casey Lee to Riverside and assign Olivia in one PATCH |
+| 11:00 | Discharge Sam Rivera by deleting the current patient record |
+| 12:00 | Admit Riley Quinn at Lakeside under Mia Brooks |
+| 13:00 | Clear Alex Taylor's staff assignment |
+| 14:00 | Give Mia the additional shift coordinator role |
+| 15:00 | Update Riverside's location to its North campus |
+
+The final demo dataset has **2 hospitals, 3 roles, 3 staff, and 5 patients: 4 assigned, 1 unassigned**. Names, birth dates, operations, and resulting relationships are fixed. MySQL-generated IDs may differ between population runs; IDs are always taken from API responses. Re-run Populate before each new test. These counts exclude unrelated records.
+
+Each request commits independently. One request runs at a time; errors stop execution without automatic retries or rollback of previous steps. Pause allows an in-flight request to finish. Ending a session or reloading the page leaves committed data in MySQL; only the timer/cursor is lost. Initial reads detect changes since the preview, and final reads verify the expected result. Other clients should avoid changing demo records during a run. See the [dashboard guide](docs/dashboard.md).
+
+## Local development
+
+Python 3.14+, uv, Node 24, npm, and an accessible MySQL server are required.
 
 ```bash
 uv sync --locked
-# Export a connection string for your local MySQL server:
 export DATABASE_URL='mysql+pymysql://hospitalsim:YOUR_PASSWORD@localhost:3306/hospitalsim'
 uv run fastapi dev app/main.py --port 8080
 ```
 
-The API reads `DATABASE_URL` from the process environment; it does not load `.env` itself. Compose loads `.env` for variable interpolation and injects a container-specific connection string. Passwords containing URL-special characters must be URL-encoded in connection strings. The PyMySQL RSA extra supports MySQL's default password authentication.
-
-The backend is a synchronous SQLModel application. `create_all` creates missing tables, but does not migrate existing tables. Introduce explicit migrations before changing a deployed schema.
-
-## Website development and configuration
+In a second terminal:
 
 ```bash
 cd web
 npm ci
 npm run dev
-npm test
-npm run build
-npm run preview
 ```
 
-The production output is `web/dist/`, served by Nginx in Docker. Vite environment variables are public and embedded **at build time**, so frontend container runtime variables cannot change them.
+Vite normally serves http://localhost:5173 and proxies `/api` to `http://127.0.0.1:8080`. Its preview server uses the same proxy. The frontend requires a running API; there is no local-data fallback. The API reads `DATABASE_URL` from the environment and does not automatically load `.env`. URL-encode special characters in passwords.
 
-| Variable | Default | Where to set it |
-| --- | --- | --- |
-| `VITE_SWAGGER_URL` | `http://<browser hostname>:8080/docs` | `web/.env.local` for local Vite; root `.env` for Compose builds |
-| `DATABASE_URL` | Required by Python | Shell environment locally; supplied by Compose in Docker |
-| `SQL_ECHO` | `false` | Shell environment or root `.env` |
-| `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` | Values in `.env.example` for local use | Root `.env` for Compose |
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Required `mysql+pymysql` connection string for Python |
+| `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` | Compose database initialization values |
+| `SQL_ECHO` | Enable actual SQL logging; default false |
+| `VITE_API_URL` | Public API base URL; default `/api` via same-origin proxy |
+| `VITE_SWAGGER_URL` | Swagger navigation URL; default `http://<browser hostname>:8080/docs` |
 
-For an HTTPS deployment or externally hosted API, set `VITE_SWAGGER_URL` to its actual HTTPS Swagger address and rebuild. No browser API requests are made by the dashboard, so CORS is not needed for this demo.
+Frontend variables are embedded **at build time**. Set them in `web/.env.local` for Vite or root `.env` for Compose, then rebuild/restart. They must not contain secrets. Static hosting needs a reachable API: use a same-origin reverse proxy, or configure an HTTPS API URL and explicit CORS permission on that backend. Publishing static assets does not host FastAPI or MySQL.
 
-## Simulation guide
+## API and data model
 
-Watch the [captioned dashboard tour](docs/vid/index.md), download its [MP4](docs/vid/walkthrough.mp4), or view the [GIF](docs/vid/walkthrough.gif). The `docs/vid/` folder contains the source screenshot, detail images, zoom GIFs, a JSON timeline, and a renderer that stitches them according to their timestamps.
+Four resources support POST/GET collection and GET/PATCH/DELETE item: `/hospitals`, `/roles`, `/staff`, `/patients`. There is no PUT endpoint. Hospital has `name` and `location`; Role has `name` and optional `description`; Staff has names, `hospital_id`, and `role_ids`; Patient has names, `date_of_birth`, `hospital_id`, and optional `staff_id`. All have generated integer IDs. Staff and roles use the `staff_roles` join table; a shared role remains assigned to every staff member who has it. A separate one-row `app_state` table stores the database-wide `was_initialized` startup flag, without changing the domain models.
 
-Run/pause the demo, change normal/surge/critical demand, or advance one simulated hour. Patients queue when their department is full and take beds freed by discharges. State is browser-local and independent of MySQL. See the [dashboard guide](docs/dashboard.md) for controls, timing, capacity, and metric definitions.
+A patient and assigned staff member must belong to the same hospital. Referenced deletions and staff transfers with assigned patients return 409. Required PATCH fields reject null with 422; nullable fields can be cleared. Discharge is DELETE, since the model has no admission-status/history field. See the [API guide](docs/api/index.md) and [data model](docs/models/index.md).
 
-## API example
+`create_all` creates missing tables but does not migrate existing schemas. Existing databases need the role-name uniqueness constraint documented in [Development](docs/development.md). The service has no authentication, pagination, or migration framework.
 
-Create parents before their dependents. Replace the example IDs below with the IDs returned by your server.
+## Checks and documentation
 
 ```bash
-curl -X POST http://localhost:8080/hospitals \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"Demo Hospital","location":"Boston"}'
-
-curl -X POST http://localhost:8080/roles \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"Physician","description":"Provides patient care"}'
-
-curl -X POST http://localhost:8080/staff \
-  -H 'Content-Type: application/json' \
-  -d '{"first_name":"Olivia","last_name":"Chen","hospital_id":1,"role_ids":[1]}'
-
-curl -X POST http://localhost:8080/patients \
-  -H 'Content-Type: application/json' \
-  -d '{"first_name":"Alex","last_name":"Taylor","date_of_birth":"1990-05-12","hospital_id":1,"staff_id":1}'
-```
-
-All four resources support `POST /resource`, `GET /resource`, `GET /resource/{id}`, `PATCH /resource/{id}`, and `DELETE /resource/{id}`. There is no `/api` prefix. See the [API guide](docs/api/index.md) for payloads, validation, and limitations.
-
-## Relational model
-
-```mermaid
-erDiagram
-    HOSPITAL ||--o{ STAFF : employs
-    HOSPITAL ||--o{ PATIENT : receives
-    STAFF o|--o{ PATIENT : treats
-    STAFF ||--o{ STAFF_ROLES : has
-    ROLE ||--o{ STAFF_ROLES : assigned
-    HOSPITAL {
-        int id PK
-        string name UK
-        string location UK
-    }
-    STAFF {
-        int id PK
-        string first_name
-        string last_name
-        int hospital_id FK
-    }
-    PATIENT {
-        int id PK
-        string first_name
-        string last_name
-        date date_of_birth
-        int hospital_id FK
-        int staff_id FK
-    }
-    ROLE {
-        int id PK
-        string name
-        string description
-    }
-    STAFF_ROLES {
-        int staff_id PK,FK
-        int role_id PK,FK
-    }
-```
-
-A patient belongs to one hospital and may have one assigned staff member. The patient API checks that assigned staff belongs to the same hospital. Staff can have multiple roles through `staff_roles`. Roles describe occupations; they do not grant access permissions. Hospital names and locations have database uniqueness constraints. Role-name uniqueness is enforced by the router and database for new tables. For an existing database, resolve duplicate names and apply `ALTER TABLE role ADD UNIQUE (name);` once, or use the deliberate clean reset in `run.sh`.
-
-## Repository map
-
-```text
-app/                 FastAPI application, database setup, models, CRUD routers
-web/src/             React dashboard, CSS, and pure TypeScript simulation engine
-web/tests/           Simulation invariants and queue behavior tests
-tests/               Isolated API CRUD and relationship regression tests
-docs/                English MkDocs guides, API usage, and data model reference
-.github/workflows/   Documentation deployment to GitHub Pages
-compose.yml          MySQL, API, and frontend services
-.env.example         Local configuration template (no production credentials)
-run.sh               Deliberate volume reset and clean-instance startup helper
-```
-
-## Documentation and checks
-
-```bash
-uv sync --locked
-uv run mkdocs serve --dev-addr 127.0.0.1:8000
-uv run mkdocs build --strict
-uv run python -m unittest discover -s tests -v
 cd web
 npm test
+npm run lint
 npm run build
 ```
 
-MkDocs publishes to [https://marcelopenas.github.io/HospitalSim/](https://marcelopenas.github.io/HospitalSim/) through the existing GitHub Actions workflow on pushes to `main`. GitHub Pages must use the `gh-pages` deployment branch. Updating files locally does not publish them.
+The Node tests use a mock HTTP transport contract to verify deterministic baseline/final states, request payloads, preservation of unrelated records, prerequisites, errors, and null assignments. They do not replace MySQL integration tests or browser interaction checks.
 
-Simulation tests cover deterministic progression, immutability, patient conservation, department capacity, queue promotion, increased surge demand, and midnight rollover. API integration tests use MySQL only and require `TEST_DATABASE_URL` pointing to a disposable database whose name ends in `_test`. They are skipped if that variable is absent; see the development guide for setup. See [development](docs/development.md) and [troubleshooting](docs/troubleshooting.md).
+```bash
+uv tool run ruff check .
+uv tool run ty check --python .venv/bin/python .
+uv run mkdocs build --strict
+# Use a disposable MySQL schema ending in _test; the suite drops its test tables.
+export TEST_DATABASE_URL='mysql+pymysql://TEST_USER:TEST_PASSWORD@localhost:3306/hospitalsim_test'
+uv run python -m unittest discover -s tests -v
+```
 
-## Scope and known limitations
+The ORM regression test runs without a server and verifies that assigning a shared role to Mia does not remove it from Olivia. MySQL integration tests also cover the persisted startup flag and shared role assignments; they are skipped without `TEST_DATABASE_URL`. The English MkDocs documentation is deployed through the existing GitHub Actions workflow on pushes to `main`. [Earlier interface media](docs/vid/index.md) and its JSON-based renderer remain in `docs/vid/`; those archived captures show the previous interface.
 
-The API provides storage and CRUD, without authentication, pagination, migrations, or a backend simulation engine. Explicit null for required PATCH fields returns 422. Referenced-record deletions and staff transfers with assigned patients return 409; unassign or reassign patients first. The resulting staff hospital is always validated, and integrity conflicts roll back with 409. The API health endpoint is a process check, not a database readiness probe. See the API guide before extending the service.
+## Repository
+
+| Path | Purpose |
+| --- | --- |
+| `app/` | FastAPI models, CRUD routes, and MySQL session setup |
+| `web/src/api.ts` | HTTP execution, SQL examples, response updates |
+| `web/src/demo.ts` | Fixed population/test plans and state checks |
+| `web/src/App.tsx` | Dashboard, manual forms, previews, testing controls |
+| `web/tests/` | API-client and deterministic-workflow tests |
+| `tests/` | MySQL integration tests |
+| `docs/` | English guides and API/model reference |
+| `run.sh` | Deliberate volume reset and clean startup |
 
 ## AI assistance
 
-OpenAI ChatGPT/Codex assisted with the dashboard implementation, simulation behavior and tests, English documentation, and development configuration in this revision.
+OpenAI ChatGPT/Codex assisted with the dashboard implementation, simulation behavior and tests, English documentation, and development configuration.

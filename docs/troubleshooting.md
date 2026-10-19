@@ -1,49 +1,65 @@
 # Troubleshooting
 
-## The dashboard works but Swagger does not open
+## The dashboard cannot load records
 
-The dashboard is self-contained; Swagger needs the API. Start the full stack and check http://localhost:8080/health. The default Swagger URL is `http://<browser hostname>:8080/docs`. Set `VITE_SWAGGER_URL` when using an external API or HTTPS, then restart Vite or rebuild the frontend image. Vite variables are build-time values.
+Start the API and MySQL, then check http://localhost:8080/health and `/hospitals`. The dashboard does not generate browser fixtures when a connection fails. In Compose, Nginx forwards `/api/*` to `web:8080`; Vite development/preview forward to `127.0.0.1:8080`. The prefix is stripped before the API receives the request.
+
+Verify `VITE_API_URL` (default `/api`). Vite variables are embedded at build time; restart Vite or rebuild the frontend after changing them. Static hosting requires a reachable backend and a same-origin proxy or explicit CORS permission on an HTTPS API. The default backend does not enable CORS. A static frontend deployment does not deploy MySQL or FastAPI.
+
+## Swagger does not open
+
+Start the API and check http://localhost:8080/docs. Set `VITE_SWAGGER_URL` for an external API or HTTPS deployment, then rebuild/restart the frontend. The default link uses the current browser hostname and port 8080.
 
 ## MySQL connection or authentication fails
 
-Check `docker compose ps` and `docker compose logs web db`. Ensure root `.env` exists with all four `MYSQL_` variables. Compose uses the internal hostname `db`, while a local Python process needs a connection string reachable from the host. The default database container does not publish port 3306.
+Check `docker compose ps` and `docker compose logs web db`. Ensure root `.env` has all four `MYSQL_` variables. Compose uses internal hostname `db`; local Python needs a connection string reachable from the host. The default database container does not publish port 3306.
 
-A MySQL volume retains initialized users and passwords. Editing `.env` alone does not change existing database users. Update those users deliberately, or use a separate fresh volume for disposable test data. Do not remove a volume containing data you need.
+A MySQL volume retains initialized users and passwords. Editing `.env` alone does not change existing users. Export `DATABASE_URL` for local Python; the app does not load `.env` itself. URL-encode special characters in passwords. Use the locked dependencies, including PyMySQL's RSA extra.
 
-If Python fails with `KeyError: DATABASE_URL`, export the variable before starting the API. The application does not load `.env` itself. URL-encode special characters in database connection URLs. Use the supplied locked/exported dependencies, including PyMySQL's RSA extra.
+## Test asks to Populate again
 
-## Startup fails after a schema change
+Test requires the exact baseline. A completed test, partially completed test, manual edit, extra demo patient/staff, renamed demo hospital, or changed role definition can invalidate it. Review and run Populate to restore the baseline, then confirm the test preview separately. Population resets patients/staff inside the two reserved `[Demo]` hospitals; other hospitals are preserved.
 
-`create_all` creates missing tables and does not alter existing columns. Apply an explicit database migration when changing an existing schema. Do not expect a rebuild to migrate or clear the database.
+## A preview says the database changed
 
-## API records do not appear on the dashboard
+Initial reads detected changes since the plan was reviewed. No planned mutations are sent in that case. The loaded data has been refreshed: reopen Populate or Test to review the updated plan. Avoid editing demo records from Swagger or another client during a run.
 
-This is expected: MySQL-backed CRUD and browser simulation are independent. Use Swagger to inspect API records. The website uses its own synthetic fixtures and browser storage.
+## A test stops or a request times out
 
-## Patients wait even though the hospital has free beds
+Inspect the request log and API logs. Each successful request commits independently. Failures stop execution without retrying or undoing earlier writes. A timeout can occur after a write committed, so refresh and inspect before retrying. Review Populate to restore the known baseline for a new test.
 
-Beds belong to departments. A patient waiting for an intensive-care bed cannot use an empty surgery bed in this model. Discharge an in-care patient from the same department or advance time. Critical demand can create a sustained queue.
+Pause waits for an in-flight request to finish. End session and page reload stop future scheduling but leave committed records in MySQL. The execution cursor is not persisted; it does not resume automatically after a reload.
 
-## The clock or chart seems paused
+## API changes do not appear in Overview
 
-Select **Run simulation**. Reloading the page and switching hospitals pause the timer. An inactive browser tab may throttle timers, and no offline progression is applied. **+1 hour** advances time immediately. The chart begins without generated arrivals and keeps only its latest 25 samples, while counters stay cumulative.
-
-## Progress is missing after reopening the page
-
-Progress is specific to the current origin (scheme, hostname, and port) and browser. Different localhost ports have different storage. Private browsing or clearing site data can remove it. If storage is blocked or full, the dashboard shows a notice and continues without durable persistence.
+Use **Refresh records** and confirm its read preview. The dashboard shows the latest loaded API responses and does not poll other clients. Check the hospital selector and local search filter. All manual dashboard mutations reload collections automatically.
 
 ## A request returns 400, 409, 422, or 500
 
-Use IDs returned by your server rather than assuming the example IDs. Check relationship prerequisites and the `detail` response. Names and locations can conflict; patient birth dates must be in the past; staff assigned to a patient must belong to the same hospital. Null required PATCH fields return 422. Referenced-record deletions and staff transfers with assigned patients return 409. Unassign/reassign dependent patients or remove role links before retrying. Inspect server logs and see the [API guide](api/index.md).
+Use IDs returned by the server. Check the `detail` response and relationship prerequisites. Hospital names/locations and role names must be unique. Birth dates must be in the past. Patient and assigned staff must belong to the same hospital. To transfer an assigned patient, update both hospital and staff in one PATCH, or unassign first.
 
-## The build fails on an older Node or Python
+Null required PATCH fields return 422. Referenced-record deletions and staff transfers with assigned patients return 409. Unassign/reassign dependent patients or clear staff-role links before deleting their parents. See the [API guide](api/index.md).
 
-Use Node 24 for the dashboard and its native TypeScript tests, and Python 3.14+ for the backend. Reinstall frontend dependencies with `npm ci`, and Python dependencies with `uv sync --locked`. Use `npm run build` to catch TypeScript errors before packaging.
+## Preview SQL differs from server logs
 
-## Port 3000, 5173, or 8080 is already in use
+This is expected. **SQL previews are demo examples only: the browser sends HTTP/JSON, never SQL.** The server validates requests and executes parameterized ORM statements, including additional relationship/validation reads. The preview is not an exact trace. Set `SQL_ECHO=true` to inspect actual backend statements.
 
-Change the published Compose port or use Vite's `--port` option. If the API port changes, update `VITE_SWAGGER_URL` and rebuild/restart the frontend. For local documentation, use `mkdocs serve --dev-addr 127.0.0.1:8000`.
+## Startup fails after a schema change
 
-## Database data disappears after running run.sh
+`create_all` creates missing tables but does not alter existing columns or constraints. Apply a database migration for an existing schema. Role-name uniqueness requires the constraint described in [Development](development.md).
 
-This is deliberate: `run.sh` exports dependencies and executes `docker compose down -v` before starting a clean instance, deleting Compose volumes and all MySQL API records. Use `docker compose down` and `docker compose up --build` without `-v` to preserve data. The browser demo has separate local storage and a separate reset control.
+## Build versions or ports
+
+Use Node 24 and Python 3.14+. Reinstall with `npm ci` and `uv sync --locked`. Run `npm run build` for TypeScript checks. If port 3000/5173/8080 is occupied, change its configuration. After changing the local backend port, update the Vite proxy target and `VITE_SWAGGER_URL`; rebuild/restart as appropriate. Documentation development uses port 8000.
+
+## Data disappears after run.sh
+
+This is deliberate: `run.sh` exports dependencies, executes `docker compose down -v`, and starts a clean instance. That deletes project volumes and all MySQL records. Use `docker compose down` and `docker compose up --build` without `-v` to preserve data. The next visit offers Start empty or a separately confirmed pre-population.
+
+## Population reports a baseline mismatch
+
+Rebuild both backend and frontend with `docker compose up --build`. An earlier ORM mapping incorrectly inferred a single staff member on the reverse role relationship: assigning the Physician role to Mia removed it from Olivia. The relationship is now explicitly a collection, and the regression test covers that case. Review Populate once to restore the demo baseline. If verification fails again, the message now identifies expected and returned records, including role IDs.
+
+## Welcome appears after refresh
+
+The current version stores the choice in MySQL through `/initialization`, rather than browser memory. Rebuild the backend so this route and the new `app_state` table are available. The welcome remains until Start empty is confirmed or initial population succeeds. A deliberate database reset clears the flag. Deleting domain records alone does not bring back the welcome screen.
