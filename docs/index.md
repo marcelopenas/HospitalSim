@@ -6,7 +6,7 @@ HospitalSim is a no-login dashboard for a FastAPI CRUD API backed by MySQL. Manu
 [Local dashboard](http://localhost:3000){ .md-button }
 [Swagger API](http://localhost:8080/docs){ .md-button }
 
-![HospitalSim dashboard screenshot](assets/dashboard.png)
+![HospitalSim dashboard screenshot](vid/dashboard.png)
 
 ## Start here
 
@@ -18,7 +18,7 @@ HospitalSim is a no-login dashboard for a FastAPI CRUD API backed by MySQL. Manu
 
 ## Showcases
 
-See [Showcases](vid/index.md) for the current UI flow coverage and [Recording and rebuilding](vid/recording.md) for producing the screenshot-based videos. Replacement recordings are pending capture against the current local stack.
+Watch the [current Overview tour](vid/index.md), built from the supplied dashboard screenshot, or follow [Recording and rebuilding](vid/recording.md) to capture live CRUD and Testing workflows.
 
 ## Actual database operations
 

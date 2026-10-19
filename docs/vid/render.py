@@ -33,7 +33,7 @@ def render(timeline_path: Path, output: str = "walkthrough") -> None:
     font = (
         ImageFont.truetype(str(root / font_path), 25)
         if font_path
-        else ImageFont.load_default(size=25)
+        else ImageFont.load_default(size=22)
     )
     fps = timeline["fps"]
     width, height = timeline["size"]
@@ -83,6 +83,36 @@ def render(timeline_path: Path, output: str = "walkthrough") -> None:
                     image = next(
                         frame for until, frame in animation if position < until
                     )
+                    start = clip.get("crop")
+                    finish = clip.get("zoom_to", start)
+                    if start is not None:
+                        for box in (start, finish):
+                            if (
+                                len(box) != 4
+                                or box[0] < 0
+                                or box[1] < 0
+                                or box[2] <= 0
+                                or box[3] <= 0
+                                or box[0] + box[2] > image.width
+                                or box[1] + box[3] > image.height
+                            ):
+                                raise ValueError(
+                                    "Crop boxes must stay within the source image."
+                                )
+                        progress = step / max(count - 1, 1)
+                        progress = progress * progress * (3 - 2 * progress)
+                        x, y, crop_width, crop_height = [
+                            a + (b - a) * progress
+                            for a, b in zip(start, finish, strict=True)
+                        ]
+                        image = image.crop(
+                            (
+                                round(x),
+                                round(y),
+                                round(x + crop_width),
+                                round(y + crop_height),
+                            )
+                        )
                     canvas = Image.new("RGB", (width, height), "#102e36")
                     fitted = ImageOps.contain(image, (width, height - 100))
                     canvas.paste(
@@ -93,9 +123,9 @@ def render(timeline_path: Path, output: str = "walkthrough") -> None:
                         ),
                     )
                     draw = ImageDraw.Draw(canvas)
-                    caption = "\n".join(textwrap.wrap(clip["caption"], width=85))
+                    caption = "\n".join(textwrap.wrap(clip["caption"], width=90))
                     draw.multiline_text(
-                        (30, height - 80), caption, font=font, fill="white", spacing=8
+                        (30, height - 88), caption, font=font, fill="white", spacing=5
                     )
                     process.stdin.write(canvas.tobytes())
     finally:

@@ -10,6 +10,5 @@ fi
 uv export --format requirements-txt --no-dev --no-emit-project --output-file requirements.txt
 
 # Deliberate clean instance: removes Compose volumes and all MySQL API records.
-# Browser-local demo progress is separate; reset it in the dashboard.
 docker compose down -v
 docker compose up --build "$@"

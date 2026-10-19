@@ -1,49 +1,171 @@
 {
-  "title": "HospitalSim dashboard tour",
-  "duration": 30,
+  "title": "HospitalSim current Overview tour",
+  "duration": 54,
   "fps": 10,
   "size": [
-    1200,
-    850
+    1440,
+    900
   ],
   "time_unit": "seconds",
   "path_base": "Directory containing timeline.json",
+  "created_at": "2026-10-19T14:47:00.825965+00:00",
   "source": {
-    "file_path": "overview.png",
-    "kind": "Site preview screenshot",
-    "url": "https://hospitalsim-operations-a0296c.insper-1495.chatgpt.site",
-    "description": "One genuine dashboard capture. Detail PNGs are crops; GIF motion zooms the camera, not application state."
+    "kind": "User-provided dashboard screenshot",
+    "file_path": "dashboard.png",
+    "provided_in": "HospitalSim.zip",
+    "sha256": "4af15911f42d85e861cf3f914c976a7a995d5ca61ebe56c41985a7f27784d737",
+    "description": "The screenshot from the newly uploaded source archive. Motion pans/zooms the camera; it does not depict UI state changes."
   },
   "frames": [
     {
       "timestamp": 0,
-      "file_path": "overview.png",
-      "caption": "HospitalSim brings hospital operations into one dashboard."
+      "file_path": "dashboard.png",
+      "caption": "Current HospitalSim Overview: the supplied screenshot shows the persisted demo baseline, with 4 patients, 3 staff, and 2 hospitals.",
+      "chapter": "overview",
+      "crop": [
+        0,
+        0,
+        1869,
+        1007
+      ]
     },
     {
-      "timestamp": 5,
-      "file_path": "controls.gif",
-      "caption": "Choose a demand scenario, adjust speed, run the simulation, or advance one hour."
+      "timestamp": 6,
+      "file_path": "dashboard.png",
+      "caption": "The sidebar opens Patients, Staff, Roles, Hospitals, and Testing. Clicking an item scrolls the page to the top.",
+      "chapter": "overview",
+      "crop": [
+        0,
+        75,
+        920,
+        510
+      ],
+      "zoom_to": [
+        0,
+        95,
+        870,
+        482
+      ]
     },
     {
-      "timestamp": 10,
-      "file_path": "metrics.gif",
-      "caption": "Read active patients, bed occupancy, staff on duty, and patients waiting for care."
+      "timestamp": 12,
+      "file_path": "dashboard.png",
+      "caption": "The metrics show 4 patient records, 3 assigned to care, 3 staff, and 2 hospitals with a combined capacity of 12 patients.",
+      "chapter": "overview",
+      "crop": [
+        268,
+        275,
+        1560,
+        680
+      ],
+      "zoom_to": [
+        280,
+        278,
+        1525,
+        665
+      ]
     },
     {
-      "timestamp": 15,
-      "file_path": "capacity.gif",
-      "caption": "Department capacity shows occupied beds against the available beds in each care unit."
+      "timestamp": 18,
+      "file_path": "dashboard.png",
+      "caption": "Care assignments group actual patient records by clinician. The baseline assigns one patient each to Olivia, Noah, and Mia.",
+      "chapter": "overview",
+      "crop": [
+        270,
+        465,
+        950,
+        520
+      ],
+      "zoom_to": [
+        285,
+        475,
+        900,
+        495
+      ]
     },
     {
-      "timestamp": 20,
-      "file_path": "navigation.gif",
-      "caption": "Open the project documentation and Swagger API from the top navigation."
+      "timestamp": 24,
+      "file_path": "dashboard.png",
+      "caption": "Open Testing leads to the Populate and Test actions. Their request and SQL previews require confirmation before database writes.",
+      "chapter": "overview",
+      "crop": [
+        1205,
+        460,
+        655,
+        365
+      ],
+      "zoom_to": [
+        1220,
+        470,
+        630,
+        350
+      ]
     },
     {
-      "timestamp": 25,
-      "file_path": "overview.png",
-      "caption": "The browser simulation uses synthetic data and saves its progress on this device."
+      "timestamp": 30,
+      "file_path": "dashboard.png",
+      "caption": "The patient registry shows profile icons, names, birth dates, hospital, and assigned staff. Manage patients opens the CRUD directory.",
+      "chapter": "overview",
+      "crop": [
+        270,
+        490,
+        1590,
+        515
+      ],
+      "zoom_to": [
+        280,
+        640,
+        1500,
+        365
+      ]
+    },
+    {
+      "timestamp": 36,
+      "file_path": "dashboard.png",
+      "caption": "The connection box sits above the local profile. Dark mode follows the browser by default; the visible switch saves a manual override.",
+      "chapter": "overview",
+      "crop": [
+        0,
+        565,
+        720,
+        442
+      ],
+      "zoom_to": [
+        0,
+        610,
+        650,
+        397
+      ]
+    },
+    {
+      "timestamp": 42,
+      "file_path": "dashboard.png",
+      "caption": "Documentation and Swagger stay in the header. Dashboard and Swagger links require a running local FastAPI and MySQL instance.",
+      "chapter": "overview",
+      "crop": [
+        1040,
+        0,
+        829,
+        460
+      ],
+      "zoom_to": [
+        1100,
+        0,
+        769,
+        425
+      ]
+    },
+    {
+      "timestamp": 48,
+      "file_path": "dashboard.png",
+      "caption": "This is a guided camera tour of one supplied screenshot. No browser clicks, CRUD operations, or running test are recorded in this clip.",
+      "chapter": "overview",
+      "crop": [
+        0,
+        0,
+        1869,
+        1007
+      ]
     }
   ]
 }

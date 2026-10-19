@@ -673,36 +673,6 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
 
 
 def publish(destination: Path) -> None:
-    project = destination.parent.parent
-    shutil.copyfile(
-        destination / "dashboard.png", project / "docs/assets/dashboard.png"
-    )
-    for relative, image in [
-        ("README.md", "docs/assets/dashboard.png"),
-        ("docs/index.md", "assets/dashboard.png"),
-    ]:
-        path = project / relative
-        content = path.read_text()
-        start, end = (
-            "<!-- dashboard-capture:start -->",
-            "<!-- dashboard-capture:end -->",
-        )
-        before, marked = content.split(start, 1)
-        _, after = marked.split(end, 1)
-        after = after.replace(
-            "; current replacement media have not yet been recorded.", "."
-        )
-        after = after.replace(
-            "Replacement recordings are pending capture against the current local stack.",
-            "Watch the overview or choose an individual flow in Showcases.",
-        )
-        path.write_text(
-            before
-            + start
-            + f"\n![HospitalSim dashboard with API-backed metrics and the sidebar theme control]({image})\n"
-            + end
-            + after
-        )
     titles = {
         "startup": "Startup choices",
         "hospitals": "Hospitals",

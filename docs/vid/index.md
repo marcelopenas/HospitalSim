@@ -1,23 +1,26 @@
 # Showcases
 
-This section is reserved for recordings of the current dashboard connected to FastAPI and MySQL. The earlier interface video has been removed from this page because it does not represent the current UI. Current recordings and a replacement dashboard screenshot have not yet been captured.
+## Current dashboard Overview
 
-## Flows
+This 54-second tour uses the dashboard screenshot supplied with this version. Camera movement highlights the navigation, metrics, care assignments, Testing entry point, patient profiles, appearance controls, and documentation links. It does not record browser clicks, CRUD operations, or a running test.
 
-| Showcase | What the recording covers |
-| --- | --- |
-| Startup | Both welcome options, the Pre-populate write preview and cancellation, Start empty confirmation, and the empty dashboard |
-| Hospitals | Create name/location/capacity, review POST, edit location and review PATCH, read response JSON, protected deletion, and successful deletion after dependencies are removed |
-| Roles | Create and edit names/descriptions and access type, request previews, individual reads, and deletion after staff references are removed |
-| Staff | Name fields, admission DATE, UTC check-in DATETIME, decimal salary, hospital selection, role checkboxes, create/edit/read previews and responses, and deletion after patient references are removed |
-| Patients | Default profile and optional upload control, names, birth date, hospital and optional staff selection, create/edit/read previews and responses, search, and deletion |
-| Populate | Concrete INSERT/UPDATE/DELETE and relationship writes, confirmation, and the verified persisted baseline |
-| Testing | Missing-baseline popup, story and request/SQL review, run, pause, next hour, speed, resume, completion, final records, and end session |
-| Appearance | Visible Dark mode switch, saved manual preference, automatic browser appearance before a saved override, and bottom connection/profile area |
-| Navigation | Sidebar scroll-to-top, hospital filtering, refresh request preview, request log, and documentation/Swagger links |
+<video controls preload="metadata" width="100%" poster="dashboard.png">
+  <source src="walkthrough.mp4" type="video/mp4">
+  Your browser can download the video using the link below.
+</video>
 
-The capture script generates a complete overview and separate MP4/GIF videos for these flows. Each video has a JSON timeline with timestamps, file paths, and captions. Once capture and rendering succeed, the generated videos replace this status page and the same dashboard screenshot is added to the README and documentation home.
+[MP4 video](walkthrough.mp4) · [Animated GIF](walkthrough.gif) · [Timestamped JSON](timeline.json) · [Source screenshot](dashboard.png)
 
-The welcome Pre-populate preview is recorded without committing that choice. Population is then executed through Testing after the Start empty flow. A separate fresh instance is needed to independently record committing Pre-populate directly from the welcome page; that alternate startup completion is not covered by this single-instance recording.
+The timeline records each frame's timestamp, file path, caption, and camera crop. Its source metadata identifies the supplied screenshot and its SHA-256 digest. Rebuilding this tour sends no API requests.
 
-[Recording and rebuilding](recording.md)
+## Live workflow recordings
+
+The optional [recorder](recording.md) drives a fresh local instance through:
+
+- Start empty and the welcome Pre-populate preview.
+- Hospital, role, staff, and patient CRUD forms, individual reads, and JSON/SQL reviews.
+- Search, hospital filtering, protected deletion, and dependent-record cleanup.
+- Populate, Test prerequisites, the ordered test, playback controls, and verified final records.
+- Automatic browser theme, manual dark/light overrides, refresh, and header links.
+
+The recorder produces a complete overview plus separate chapter videos after a successful run. See the [Dashboard guide](../dashboard.md) for the full operating flow and field descriptions.

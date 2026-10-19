@@ -9,10 +9,7 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "fastapi[standard]>=0.143.1",
-    "markdown-grid-tables>=0.6.0",
-    "mkdocs-badges>=0.6.0",
     "mkdocs-material>=9.7.7",
-    "mkdocs-toggle-sidebar-plugin>=0.1.2",
     "pymysql[rsa]>=1.1.1",
     "sqlmodel>=0.0.48",
 ]

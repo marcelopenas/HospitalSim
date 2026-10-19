@@ -14,7 +14,7 @@
 | `web/src/demo.ts` | Population/test plans, baseline/final state validation |
 | `web/src/App.css` / `index.css` | Dashboard layout, styling, and responsive rules |
 | `web/tests/` | Node-based API client and workflow tests |
-| `tests/` | MySQL-only API integration tests |
+| `tests/` | Schema, ORM, HTTP-cache, and optional MySQL integration tests |
 | `docs/` / `mkdocs.yml` | Documentation source and navigation |
 | `compose.yml` | API, frontend, and MySQL services |
 
@@ -68,7 +68,7 @@ uv tool run ruff check .
 uv tool run ty check --python .venv/bin/python .
 ```
 
-Run `uv sync --locked` first to create the project environment. Ruff and ty are development tools. The optional media recorder/renderer requires Pillow (`uv pip install Pillow`) and FFmpeg; no API runtime dependency was added.
+Run `uv sync --locked` first to create the project environment. Ruff and ty are development tools. The optional [media tools](vid/recording.md) use Pillow and FFmpeg; live UI recording also needs Playwright. Their commands install tools on demand without adding API runtime dependencies.
 
 ## Documentation
 
