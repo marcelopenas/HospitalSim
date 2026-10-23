@@ -1,4 +1,5 @@
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from pydantic import field_serializer, field_validator
@@ -8,8 +9,6 @@ from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from decimal import Decimal
-
     from app.models.hospital import Hospital
     from app.models.patient import Patient
     from app.models.role import Role
