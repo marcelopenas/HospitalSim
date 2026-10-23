@@ -10,6 +10,7 @@ requires-python = ">=3.14"
 dependencies = [
     "fastapi[standard]>=0.143.1",
     "mkdocs-material>=9.7.7",
+    "pillow>=13.0.0",
     "pymysql[rsa]>=1.1.1",
     "sqlmodel>=0.0.48",
 ]

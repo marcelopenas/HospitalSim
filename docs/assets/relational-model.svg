@@ -5,32 +5,32 @@
 <rect width="1600" height="1060" fill="#f7f9fc"/><rect x="20" y="90" width="1560" height="920" rx="8" fill="#f0f4f9" stroke="#d6dee8"/>
 <text x="60" y="47" font-family="sans-serif" font-size="26" font-weight="bold" fill="#18344f">HospitalSim · Relational model</text><text x="60" y="73" font-family="sans-serif" font-size="14" fill="#5e7184">MySQL 8.4 · physical tables, keys, types, and relationships</text>
 
-<path d="M1080,191 L1040,191 L1040,563 L1000,563" fill="none" stroke="#375c80" stroke-width="2" stroke-dasharray="7 5"/>
-<path d="M1066,184V198" stroke="#375c80" stroke-width="2"/>
-<path d="M1058,184V198" stroke="#375c80" stroke-width="2"/>
+<path d="M1080,631 L1040,631 L1040,563 L1000,563" fill="none" stroke="#375c80" stroke-width="2" stroke-dasharray="7 5"/>
+<path d="M1066,624V638" stroke="#375c80" stroke-width="2"/>
+<path d="M1058,624V638" stroke="#375c80" stroke-width="2"/>
 <path d="M1000,555L1014,563L1000,571 M1014,563H1000" fill="none" stroke="#375c80" stroke-width="2"/>
 <circle cx="1027" cy="563" r="5" fill="#f7f9fc" stroke="#375c80" stroke-width="2"/>
-<path d="M1520,191 L1555,191 L1555,831 L1520,831" fill="none" stroke="#375c80" stroke-width="2" stroke-dasharray="7 5"/>
-<path d="M1534,184V198" stroke="#375c80" stroke-width="2"/>
-<path d="M1542,184V198" stroke="#375c80" stroke-width="2"/>
-<path d="M1520,823L1534,831L1520,839 M1534,831H1520" fill="none" stroke="#375c80" stroke-width="2"/>
-<circle cx="1547" cy="831" r="5" fill="#f7f9fc" stroke="#375c80" stroke-width="2"/>
-<path d="M1000,461 L1020,461 L1020,797 L1080,797" fill="none" stroke="#375c80" stroke-width="2" stroke-dasharray="7 5"/>
+<path d="M1520,631 L1570,631 L1570,361 L1520,361" fill="none" stroke="#375c80" stroke-width="2" stroke-dasharray="7 5"/>
+<path d="M1534,624V638" stroke="#375c80" stroke-width="2"/>
+<path d="M1542,624V638" stroke="#375c80" stroke-width="2"/>
+<path d="M1520,353L1534,361L1520,369 M1534,361H1520" fill="none" stroke="#375c80" stroke-width="2"/>
+<circle cx="1547" cy="361" r="5" fill="#f7f9fc" stroke="#375c80" stroke-width="2"/>
+<path d="M1000,461 L1040,461 L1040,327 L1080,327" fill="none" stroke="#375c80" stroke-width="2" stroke-dasharray="7 5"/>
 <path d="M1014,454V468" stroke="#375c80" stroke-width="2"/>
 <circle cx="1025" cy="461" r="5" fill="#f7f9fc" stroke="#375c80" stroke-width="2"/>
-<path d="M1080,789L1066,797L1080,805 M1066,797H1080" fill="none" stroke="#375c80" stroke-width="2"/>
-<circle cx="1053" cy="797" r="5" fill="#f7f9fc" stroke="#375c80" stroke-width="2"/>
+<path d="M1080,319L1066,327L1080,335 M1066,327H1080" fill="none" stroke="#375c80" stroke-width="2"/>
+<circle cx="1053" cy="327" r="5" fill="#f7f9fc" stroke="#375c80" stroke-width="2"/>
 <path d="M560,461 L500,461 L500,481 L460,481" fill="none" stroke="#375c80" stroke-width="2"/>
 <path d="M546,454V468" stroke="#375c80" stroke-width="2"/>
 <path d="M538,454V468" stroke="#375c80" stroke-width="2"/>
 <path d="M460,473L474,481L460,489 M474,481H460" fill="none" stroke="#375c80" stroke-width="2"/>
 <circle cx="487" cy="481" r="5" fill="#f7f9fc" stroke="#375c80" stroke-width="2"/>
-<path d="M460,751 L480,751 L480,515 L460,515" fill="none" stroke="#375c80" stroke-width="2"/>
+<path d="M460,751 L500,751 L500,515 L460,515" fill="none" stroke="#375c80" stroke-width="2"/>
 <path d="M474,744V758" stroke="#375c80" stroke-width="2"/>
 <path d="M482,744V758" stroke="#375c80" stroke-width="2"/>
 <path d="M460,507L474,515L460,523 M474,515H460" fill="none" stroke="#375c80" stroke-width="2"/>
 <circle cx="487" cy="515" r="5" fill="#f7f9fc" stroke="#375c80" stroke-width="2"/>
-<g font-family="sans-serif"><rect x="1080" y="130" width="440" height="216" rx="5" fill="white" stroke="#7894b4"/><path d="M1085,130H1515Q1520,130 1520,135V173H1080V135Q1080,130 1085,130" fill="#bfd4ec"/>
+<g font-family="sans-serif" transform="translate(0 440)"><rect x="1080" y="130" width="440" height="216" rx="5" fill="white" stroke="#7894b4"/><path d="M1085,130H1515Q1520,130 1520,135V173H1080V135Q1080,130 1085,130" fill="#bfd4ec"/>
 <rect x="1095" y="144" width="17" height="16" rx="1" fill="#eff5fc" stroke="#587da3"/><path d="M1095,149H1112M1100,149V160" stroke="#587da3"/><text x="1124" y="159" font-size="18" font-weight="bold" fill="#173a60">hospital</text>
 <rect x="1081" y="174" width="438" height="34" fill="#fff9e8"/><path d="M1080,174H1520" stroke="#e1e7ef"/>
 <circle cx="1098" cy="189" r="4" fill="none" stroke="#bd8a19" stroke-width="2"/><path d="M1102,189h11m-3,0v5m-4,-5v4" fill="none" stroke="#bd8a19" stroke-width="2"/>
@@ -61,7 +61,7 @@
 <rect x="561" y="648" width="438" height="34" fill="#ffffff"/><path d="M560,648H1000" stroke="#e1e7ef"/>
 <text x="615" y="670" font-family="monospace" font-size="13" fill="#233b52">salary</text><text x="967" y="670" text-anchor="end" font-family="monospace" font-size="12" fill="#526b84">DECIMAL(12,2)</text><circle cx="984" cy="665" r="3.5" fill="#536a80" stroke="#536a80"/>
 <path d="M560,682H1000" stroke="#c5d3e1"/><text x="572" y="704" font-size="11" fill="#556d84">salary ≥ 0 · UTC check-in · exact monetary amount</text></g>
-<g font-family="sans-serif"><rect x="1080" y="600" width="440" height="318" rx="5" fill="white" stroke="#7894b4"/><path d="M1085,600H1515Q1520,600 1520,605V643H1080V605Q1080,600 1085,600" fill="#bfd4ec"/>
+<g font-family="sans-serif" transform="translate(0 -470)"><rect x="1080" y="600" width="440" height="318" rx="5" fill="white" stroke="#7894b4"/><path d="M1085,600H1515Q1520,600 1520,605V643H1080V605Q1080,600 1085,600" fill="#bfd4ec"/>
 <rect x="1095" y="614" width="17" height="16" rx="1" fill="#eff5fc" stroke="#587da3"/><path d="M1095,619H1112M1100,619V630" stroke="#587da3"/><text x="1124" y="629" font-size="18" font-weight="bold" fill="#173a60">patient</text>
 <rect x="1081" y="644" width="438" height="34" fill="#fff9e8"/><path d="M1080,644H1520" stroke="#e1e7ef"/>
 <circle cx="1098" cy="659" r="4" fill="none" stroke="#bd8a19" stroke-width="2"/><path d="M1102,659h11m-3,0v5m-4,-5v4" fill="none" stroke="#bd8a19" stroke-width="2"/>
@@ -85,12 +85,12 @@
 <rect x="75" y="434" width="17" height="16" rx="1" fill="#eff5fc" stroke="#587da3"/><path d="M75,439H92M80,439V450" stroke="#587da3"/><text x="104" y="449" font-size="18" font-weight="bold" fill="#173a60">staff_roles</text>
 <rect x="61" y="464" width="398" height="34" fill="#fff9e8"/><path d="M60,464H460" stroke="#e1e7ef"/>
 <circle cx="78" cy="479" r="4" fill="none" stroke="#bd8a19" stroke-width="2"/><path d="M82,479h11m-3,0v5m-4,-5v4" fill="none" stroke="#bd8a19" stroke-width="2"/>
-<path d="M99,474l6,6 -6,6 -6,-6Z" fill="#5087ba" stroke="#3e6b97"/>
-<text x="115" y="486" font-family="monospace" font-size="13" fill="#233b52">staff_id</text><text x="427" y="486" text-anchor="end" font-family="monospace" font-size="12" fill="#526b84">INT</text><circle cx="444" cy="481" r="3.5" fill="#536a80" stroke="#536a80"/>
+<path d="M111,474l6,6 -6,6 -6,-6Z" fill="#5087ba" stroke="#3e6b97"/>
+<text x="135" y="486" font-family="monospace" font-size="13" fill="#233b52">staff_id</text><text x="427" y="486" text-anchor="end" font-family="monospace" font-size="12" fill="#526b84">INT</text><circle cx="444" cy="481" r="3.5" fill="#536a80" stroke="#536a80"/>
 <rect x="61" y="498" width="398" height="34" fill="#fff9e8"/><path d="M60,498H460" stroke="#e1e7ef"/>
 <circle cx="78" cy="513" r="4" fill="none" stroke="#bd8a19" stroke-width="2"/><path d="M82,513h11m-3,0v5m-4,-5v4" fill="none" stroke="#bd8a19" stroke-width="2"/>
-<path d="M99,508l6,6 -6,6 -6,-6Z" fill="#5087ba" stroke="#3e6b97"/>
-<text x="115" y="520" font-family="monospace" font-size="13" fill="#233b52">role_id</text><text x="427" y="520" text-anchor="end" font-family="monospace" font-size="12" fill="#526b84">INT</text><circle cx="444" cy="515" r="3.5" fill="#536a80" stroke="#536a80"/>
+<path d="M111,508l6,6 -6,6 -6,-6Z" fill="#5087ba" stroke="#3e6b97"/>
+<text x="135" y="520" font-family="monospace" font-size="13" fill="#233b52">role_id</text><text x="427" y="520" text-anchor="end" font-family="monospace" font-size="12" fill="#526b84">INT</text><circle cx="444" cy="515" r="3.5" fill="#536a80" stroke="#536a80"/>
 <path d="M60,532H460" stroke="#c5d3e1"/><text x="72" y="554" font-size="11" fill="#556d84">Composite primary key: (staff_id, role_id)</text></g>
 <g font-family="sans-serif"><rect x="60" y="690" width="400" height="216" rx="5" fill="white" stroke="#7894b4"/><path d="M65,690H455Q460,690 460,695V733H60V695Q60,690 65,690" fill="#bfd4ec"/>
 <rect x="75" y="704" width="17" height="16" rx="1" fill="#eff5fc" stroke="#587da3"/><path d="M75,709H92M80,709V720" stroke="#587da3"/><text x="104" y="719" font-size="18" font-weight="bold" fill="#173a60">role</text>
