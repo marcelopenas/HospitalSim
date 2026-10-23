@@ -21,17 +21,17 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Open http://localhost:3000. A new database starts empty. Choose **Start empty** to enter your own records or **Pre-populate** to review the demo writes. MySQL remembers the completed choice across reloads and browsers.
+Open ![http://localhost:3000](http://localhost:3000). A new database starts empty. Choose **Start empty** to enter your own records or **Pre-populate** to review the demo writes. MySQL remembers the completed choice across reloads and browsers.
 
 > [!WARNING]
 > **`bash run.sh` deliberately deletes all project Compose volumes and MySQL data before starting a clean instance.** This helper also requires uv to export `requirements.txt`; it creates `.env` from the example when missing. `bash run.sh -d` performs the same reset. To preserve data, use `docker compose down` and `docker compose up --build` without `-v`.
 
 | Service | Address |
 | --- | --- |
-| Dashboard | http://localhost:3000 |
-| Swagger UI | http://localhost:8080/docs |
-| ReDoc | http://localhost:8080/redoc |
-| Health | http://localhost:8080/health |
+| Dashboard | ![http://localhost:3000](http://localhost:3000) |
+| Swagger UI | ![http://localhost:8080/docs](http://localhost:8080/docs) |
+| ReDoc | ![http://localhost:8080/redoc](http://localhost:8080/redoc) |
+| Health | ![http://localhost:8080/health](http://localhost:8080/health) |
 
 The dashboard's `/api/*` requests are proxied to FastAPI with `/api` stripped. MySQL is internal to Compose, and records persist in `db-data` during normal restarts. See [Getting started](docs/getting-started.md) for native development and configuration.
 
@@ -63,6 +63,11 @@ Access classifications are metadata; the API has no authentication. Patient disc
 Successful GETs permit private browser caching for roles (5 minutes), hospitals (1 minute), and staff (15 seconds). Patients, writes, initialization, and handled HTTP errors use `no-store`. Dashboard GETs bypass caching so manual updates and test checks read the backend immediately. See [API usage](docs/api/index.md).
 
 Existing databases require the [documented schema upgrade](docs/development.md#upgrading-an-existing-schema) or an intentional clean reset; `create_all` does not alter existing columns.
+
+`APP_STATE` is independent startup metadata. The API also enforces hospital capacity and requires assigned staff to belong to the patient’s hospital.
+
+<!-- TODO change the diagram to relational-model.svg -->
+![Database schema diagram](docs/assets/err-diagram.svg)
 
 ## Checks and documentation
 
