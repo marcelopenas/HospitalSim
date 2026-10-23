@@ -1,6 +1,8 @@
-# HospitalSim <img src="web/public/favicon.svg" align="right" width="150" alt="Haskllite logo">
+# HospitalSim <img src="web/public/favicon.svg" align="right" width="150" alt="HospitalSim logo">
 
 A no-login hospital dashboard backed by FastAPI and MySQL. Manage hospitals, roles, staff, and patients manually, or run a predefined sequence of real API operations from **Testing**.
+
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white) ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) ![Node.js](https://img.shields.io/badge/Node.js-5FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white) ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi&logoColor=white) ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 [Documentation](https://marcelopenas.github.io/HospitalSim/) · [Local dashboard](http://localhost:3000) · [Swagger UI](http://localhost:8080/docs)
 
