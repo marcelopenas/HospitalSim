@@ -14,7 +14,11 @@ from app.models.hospital import (
 from app.models.patient import Patient
 from app.models.staff import Staff
 
-router = APIRouter(prefix="/hospitals", tags=["Hospitals"], responses={409: {"description": "Unique-value or relationship conflict"}})
+router = APIRouter(
+    prefix="/hospitals",
+    tags=["Hospitals"],
+    responses={409: {"description": "Unique-value or relationship conflict"}},
+)
 
 
 @router.post(
@@ -64,7 +68,9 @@ def list_hospitals(
     responses={404: {"description": "Hospital not found"}},
 )
 def get_hospital(
-    hospital_id: Annotated[int, Path(gt=0, description="ID of the hospital record.", examples=[1])],
+    hospital_id: Annotated[
+        int, Path(gt=0, description="ID of the hospital record.", examples=[1])
+    ],
     session: Annotated[Session, Depends(get_session)],
 ) -> Hospital:
     hospital = session.get(Hospital, hospital_id)
@@ -80,11 +86,20 @@ def get_hospital(
     responses={404: {"description": "Hospital not found"}},
 )
 def update_hospital(
-    hospital_id: Annotated[int, Path(gt=0, description="ID of the hospital record to update.", examples=[1])],
+    hospital_id: Annotated[
+        int,
+        Path(
+            gt=0,
+            description="ID of the hospital record to update.",
+            examples=[1],
+        ),
+    ],
     changes: HospitalUpdate,
     session: Annotated[Session, Depends(get_session)],
 ) -> Hospital:
-    hospital = session.exec(select(Hospital).where(Hospital.id == hospital_id).with_for_update()).first()
+    hospital = session.exec(
+        select(Hospital).where(Hospital.id == hospital_id).with_for_update(),
+    ).first()
     if hospital is None:
         raise HTTPException(status_code=404, detail="Hospital not found")
     data = changes.model_dump(exclude_unset=True)
@@ -106,9 +121,16 @@ def update_hospital(
             detail="Hospital name or location already exists",
         )
     if "capacity" in data:
-        count = session.exec(select(func.count()).select_from(Patient).where(Patient.hospital_id == hospital_id)).one()
+        count = session.exec(
+            select(func.count())
+            .select_from(Patient)
+            .where(Patient.hospital_id == hospital_id),
+        ).one()
         if data["capacity"] < count:
-            raise HTTPException(status_code=409, detail="Capacity cannot be lower than the current patient count")
+            raise HTTPException(
+                status_code=409,
+                detail="Capacity cannot be lower than the patient count",
+            )
     hospital.sqlmodel_update(data)
     session.add(hospital)
     commit_or_conflict(session)
@@ -123,16 +145,28 @@ def update_hospital(
     responses={404: {"description": "Hospital not found"}},
 )
 def delete_hospital(
-    hospital_id: Annotated[int, Path(gt=0, description="ID of the hospital record.", examples=[1])],
+    hospital_id: Annotated[
+        int,
+        Path(gt=0, description="ID of the hospital record.", examples=[1]),
+    ],
     session: Annotated[Session, Depends(get_session)],
 ) -> None:
     hospital = session.get(Hospital, hospital_id)
     if hospital is None:
         raise HTTPException(status_code=404, detail="Hospital not found")
     if (
-        session.exec(select(Staff.id).where(Staff.hospital_id == hospital_id)).first() is not None
-        or session.exec(select(Patient.id).where(Patient.hospital_id == hospital_id)).first() is not None
+        session.exec(
+            select(Staff.id).where(Staff.hospital_id == hospital_id),
+        ).first()
+        is not None
+        or session.exec(
+            select(Patient.id).where(Patient.hospital_id == hospital_id),
+        ).first()
+        is not None
     ):
-        raise HTTPException(status_code=409, detail="Hospital has staff or patients; remove dependents first")
+        raise HTTPException(
+            status_code=409,
+            detail="Hospital has staff or patients; remove dependents first",
+        )
     session.delete(hospital)
     commit_or_conflict(session)

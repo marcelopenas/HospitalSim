@@ -5,9 +5,19 @@ from sqlmodel import Session, select
 
 from app.database import get_session
 from app.dependencies import commit_or_conflict
-from app.models.role import Role, RoleCreate, RoleRead, RoleUpdate, StaffRoleLink
+from app.models.role import (
+    Role,
+    RoleCreate,
+    RoleRead,
+    RoleUpdate,
+    StaffRoleLink,
+)
 
-router = APIRouter(prefix="/roles", tags=["Roles"], responses={409: {"description": "Unique-value or relationship conflict"}})
+router = APIRouter(
+    prefix="/roles",
+    tags=["Roles"],
+    responses={409: {"description": "Unique-value or relationship conflict"}},
+)
 
 
 def get_role_or_404(role_id: int, session: Session) -> Role:
@@ -50,7 +60,10 @@ def list_roles(
     responses={404: {"description": "Role not found"}},
 )
 def get_role(
-    role_id: Annotated[int, Path(gt=0, description="ID of the role record.", examples=[1])],
+    role_id: Annotated[
+        int,
+        Path(gt=0, description="ID of the role record.", examples=[1]),
+    ],
     session: Annotated[Session, Depends(get_session)],
 ) -> Role:
     return get_role_or_404(role_id, session)
@@ -63,7 +76,14 @@ def get_role(
     responses={404: {"description": "Role not found"}},
 )
 def update_role(
-    role_id: Annotated[int, Path(gt=0, description="ID of the role record to update.", examples=[1])],
+    role_id: Annotated[
+        int,
+        Path(
+            gt=0,
+            description="ID of the role record to update.",
+            examples=[1],
+        ),
+    ],
     changes: RoleUpdate,
     session: Annotated[Session, Depends(get_session)],
 ) -> Role:
@@ -90,11 +110,24 @@ def update_role(
     responses={404: {"description": "Role not found"}},
 )
 def delete_role(
-    role_id: Annotated[int, Path(gt=0, description="ID of the role record.", examples=[1])],
+    role_id: Annotated[
+        int,
+        Path(gt=0, description="ID of the role record.", examples=[1]),
+    ],
     session: Annotated[Session, Depends(get_session)],
 ) -> None:
     role = get_role_or_404(role_id, session)
-    if session.exec(select(StaffRoleLink.staff_id).where(StaffRoleLink.role_id == role_id)).first() is not None:
-        raise HTTPException(status_code=409, detail="Role is assigned to staff; remove assignments first")
+    if (
+        session.exec(
+            select(StaffRoleLink.staff_id).where(
+                StaffRoleLink.role_id == role_id,
+            ),
+        ).first()
+        is not None
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Role is assigned to staff; remove assignments first",
+        )
     session.delete(role)
     commit_or_conflict(session)

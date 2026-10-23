@@ -1,11 +1,14 @@
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 
 from app.caching import cache_control
 from app.database import create_db_and_tables
 from app.routers import hospitals, initialization, patients, roles, staff
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 
 @asynccontextmanager

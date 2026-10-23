@@ -16,7 +16,11 @@ from app.models.patient import (
 )
 from app.models.staff import Staff
 
-router = APIRouter(prefix="/patients", tags=["Patients"], responses={409: {"description": "Unique-value or relationship conflict"}})
+router = APIRouter(
+    prefix="/patients",
+    tags=["Patients"],
+    responses={409: {"description": "Unique-value or relationship conflict"}},
+)
 
 
 def validate_patient_references(
@@ -25,7 +29,9 @@ def validate_patient_references(
     session: Session,
     patient_id: int | None = None,
 ) -> None:
-    hospital = session.exec(select(Hospital).where(Hospital.id == hospital_id).with_for_update()).first()
+    hospital = session.exec(
+        select(Hospital).where(Hospital.id == hospital_id).with_for_update(),
+    ).first()
     if hospital is None:
         raise HTTPException(status_code=400, detail="Hospital not found")
     if staff_id is not None:
@@ -41,18 +47,35 @@ def validate_patient_references(
                 detail="staff_id and hospital_id must refer to the same hospital",
             )
 
-    count_query = select(func.count()).select_from(Patient).where(Patient.hospital_id == hospital_id)
+    count_query = (
+        select(func.count())
+        .select_from(Patient)
+        .where(Patient.hospital_id == hospital_id)
+    )
     if patient_id is not None:
         count_query = count_query.where(Patient.id != patient_id)
     if session.exec(count_query).one() >= hospital.capacity:
-        raise HTTPException(status_code=409, detail="Hospital capacity reached; choose another hospital or increase capacity")
+        raise HTTPException(
+            status_code=409,
+            detail="Hospital capacity reached; choose another hospital or increase capacity",
+        )
 
 
 def to_read(patient: Patient) -> PatientRead:
-    return PatientRead.model_validate({**patient.model_dump(), "image_blob": base64.b64encode(patient.image_blob).decode("ascii")})
+    return PatientRead.model_validate(
+        {
+            **patient.model_dump(),
+            "image_blob": base64.b64encode(patient.image_blob).decode("ascii"),
+        },
+    )
 
 
-def get_patient_or_404(patient_id: int, session: Session, *, lock: bool = False) -> Patient:
+def get_patient_or_404(
+    patient_id: int,
+    session: Session,
+    *,
+    lock: bool = False,
+) -> Patient:
     query = select(Patient).where(Patient.id == patient_id)
     patient = session.exec(query.with_for_update() if lock else query).first()
     if patient is None:
@@ -72,7 +95,10 @@ def create_patient(
     session: Annotated[Session, Depends(get_session)],
 ) -> PatientRead:
     validate_patient_references(patient.hospital_id, patient.staff_id, session)
-    db_patient = Patient.model_validate(patient, update={"image_blob": decode_image(patient.image_blob)})
+    db_patient = Patient.model_validate(
+        patient,
+        update={"image_blob": decode_image(patient.image_blob)},
+    )
     session.add(db_patient)
     commit_or_conflict(session)
     session.refresh(db_patient)
@@ -83,7 +109,9 @@ def create_patient(
 def list_patients(
     session: Annotated[Session, Depends(get_session)],
 ) -> list[PatientRead]:
-    return [to_read(patient) for patient in session.exec(select(Patient)).all()]
+    return [
+        to_read(patient) for patient in session.exec(select(Patient)).all()
+    ]
 
 
 @router.get(
@@ -93,7 +121,10 @@ def list_patients(
     responses={404: {"description": "Patient not found"}},
 )
 def get_patient(
-    patient_id: Annotated[int, Path(gt=0, description="ID of the patient record.", examples=[1])],
+    patient_id: Annotated[
+        int,
+        Path(gt=0, description="ID of the patient record.", examples=[1]),
+    ],
     session: Annotated[Session, Depends(get_session)],
 ) -> PatientRead:
     return to_read(get_patient_or_404(patient_id, session))
@@ -106,7 +137,14 @@ def get_patient(
     responses={404: {"description": "Patient not found"}},
 )
 def update_patient(
-    patient_id: Annotated[int, Path(gt=0, description="ID of the patient record to update.", examples=[1])],
+    patient_id: Annotated[
+        int,
+        Path(
+            gt=0,
+            description="ID of the patient record to update.",
+            examples=[1],
+        ),
+    ],
     changes: PatientUpdate,
     session: Annotated[Session, Depends(get_session)],
 ) -> PatientRead:
@@ -131,7 +169,10 @@ def update_patient(
     responses={404: {"description": "Patient not found"}},
 )
 def delete_patient(
-    patient_id: Annotated[int, Path(gt=0, description="ID of the patient record.", examples=[1])],
+    patient_id: Annotated[
+        int,
+        Path(gt=0, description="ID of the patient record.", examples=[1]),
+    ],
     session: Annotated[Session, Depends(get_session)],
 ) -> None:
     patient = get_patient_or_404(patient_id, session, lock=True)

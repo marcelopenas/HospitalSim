@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 if make_url(DATABASE_URL).drivername != "mysql+pymysql":
-    msg = "DATABASE_URL must use mysql+pymysql; MySQL is the only supported database"
+    msg = "DATABASE_URL must use mysql+pymysql"
     raise ValueError(msg)
 
 engine = create_engine(

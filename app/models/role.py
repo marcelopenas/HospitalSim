@@ -16,20 +16,43 @@ class StaffRoleLink(SQLModel, table=True):
 
 
 class RoleBase(SQLModel):
-    name: str = Field(unique=True, min_length=1, max_length=100, description="Unique occupation or responsibility label.", schema_extra={"examples": ["Physician"]})
-    description: str | None = Field(default=None, max_length=500, description="Optional role description; null clears it.", schema_extra={"examples": ["Provides patient care"]})
+    name: str = Field(
+        unique=True,
+        min_length=1,
+        max_length=100,
+        description="Unique occupation or responsibility label.",
+        schema_extra={"examples": ["Physician"]},
+    )
+    description: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Optional role description; null clears it.",
+        schema_extra={"examples": ["Provides patient care"]},
+    )
 
-    access_type: Literal["A", "B", "C"] = Field(sa_type=CHAR(1), description="Hospital access classification: A, B, or C. Metadata only; the API has no authentication.", schema_extra={"examples": ["A"]})
+    access_type: Literal["A", "B", "C"] = Field(
+        sa_type=CHAR(1),
+        description="Hospital access classification: A, B, or C. Metadata only; the API has no authentication.",
+        schema_extra={"examples": ["A"]},
+    )
 
 
 class Role(RoleBase, table=True):
-    __table_args__ = (CheckConstraint("access_type IN ('A', 'B', 'C')", name="ck_role_access_type"),)
+    __table_args__ = (
+        CheckConstraint(
+            "access_type IN ('A', 'B', 'C')",
+            name="ck_role_access_type",
+        ),
+    )
     id: int | None = Field(default=None, primary_key=True)
 
     # The native collection annotation prevents shared roles being inferred as scalar.
     staff: list[Staff] = Relationship(
         sa_relationship=relationship(
-            "Staff", secondary="staff_roles", back_populates="roles", passive_deletes=True,
+            "Staff",
+            secondary="staff_roles",
+            back_populates="roles",
+            passive_deletes=True,
             uselist=True,
         ),
     )
@@ -44,7 +67,22 @@ class RoleRead(RoleBase):
 
 
 class RoleUpdate(SQLModel):
-    name: str = Field(default=None, min_length=1, max_length=100, description="Unique occupation or responsibility label. Omit in PATCH to retain the value; null is rejected.", schema_extra={"examples": ["Physician"]})
-    description: str | None = Field(default=None, max_length=500, description="Optional role description; null clears it.", schema_extra={"examples": ["Provides patient care"]})
+    name: str = Field(
+        default=None,
+        min_length=1,
+        max_length=100,
+        description="Unique occupation or responsibility label. Omit in PATCH to retain the value; null is rejected.",
+        schema_extra={"examples": ["Physician"]},
+    )
+    description: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Optional role description; null clears it.",
+        schema_extra={"examples": ["Provides patient care"]},
+    )
 
-    access_type: Literal["A", "B", "C"] = Field(default=None, description="One-character hospital access classification. Omit to retain; null is rejected.", schema_extra={"examples": ["B"]})
+    access_type: Literal["A", "B", "C"] = Field(
+        default=None,
+        description="One-character hospital access classification. Omit to retain; null is rejected.",
+        schema_extra={"examples": ["B"]},
+    )
