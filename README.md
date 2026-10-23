@@ -11,7 +11,7 @@ A no-login hospital dashboard backed by FastAPI and MySQL. Manage hospitals, rol
 
 ![HospitalSim dashboard with the populated baseline, patient metrics, and care assignments](docs/vid/dashboard.png)
 
-[Watch the current Overview tour](docs/vid/index.md) · [Data model and relational diagram](docs/models/index.md)
+[Watch the current Overview tour](https://marcelopenas.github.io/HospitalSim/vid/) · [Data model and relational diagram](https://marcelopenas.github.io/HospitalSim/models) · [API usage](https://marcelopenas.github.io/HospitalSim/api)
 
 ## Start with Docker
 
@@ -47,7 +47,7 @@ The dashboard's `/api/*` requests are proxied to FastAPI with `/api` stripped. M
 
 Every request has an illustrative SQL preview. **The browser sends HTTP and JSON, never SQL.** The backend validates requests and executes parameterized ORM queries; previews are examples, not an exact SQL trace.
 
-See the [Dashboard guide](docs/dashboard.md) for the operation schedule, previews, and interruption behavior. The [Showcases](docs/vid/index.md) page contains the current screenshot-based tour and instructions for recording live workflows.
+See the [Dashboard guide](https://marcelopenas.github.io/HospitalSim/dashboard) for the operation schedule, previews, and interruption behavior. The [Showcases](https://marcelopenas.github.io/HospitalSim/vid/) page contains the current screenshot-based tour and instructions for recording live workflows.
 
 ## API and data model
 
@@ -55,16 +55,16 @@ All four resources support collection POST/GET and item GET/PATCH/DELETE. Hospit
 
 | Resource | Main fields |
 | --- | --- |
-| [Hospital](docs/models/hospital.md) | Name, location, maximum patient capacity |
-| [Role](docs/models/roles.md) | Name, description, CHAR(1) access classification A/B/C |
-| [Staff](docs/models/staff.md) | Names, admission DATE, optional UTC DATETIME check-in, DECIMAL(12,2) salary, hospital, roles |
-| [Patient](docs/models/patient.md) | Names, birth date, hospital, optional clinician, image BLOB transported as base64 JSON |
+| [Hospital](https://marcelopenas.github.io/HospitalSim/models/hospital) | Name, location, maximum patient capacity |
+| [Role](https://marcelopenas.github.io/HospitalSim/models/roles) | Name, description, CHAR(1) access classification A/B/C |
+| [Staff](https://marcelopenas.github.io/HospitalSim/models/staff) | Names, admission DATE, optional UTC DATETIME check-in, DECIMAL(12,2) salary, hospital, roles |
+| [Patient](https://marcelopenas.github.io/HospitalSim/models/patient) | Names, birth date, hospital, optional clinician, image BLOB transported as base64 JSON |
 
 Access classifications are metadata; the API has no authentication. Patient discharge is DELETE, since there is no admission-history model. Salaries use decimal strings in JSON to preserve cents. Demo profiles share a generic silhouette with different background colours.
 
-Successful GETs permit private browser caching for roles (5 minutes), hospitals (1 minute), and staff (15 seconds). Patients, writes, initialization, and handled HTTP errors use `no-store`. Dashboard GETs bypass caching so manual updates and test checks read the backend immediately. See [API usage](docs/api/index.md).
+Successful GETs permit private browser caching for roles (5 minutes), hospitals (1 minute), and staff (15 seconds). Patients, writes, initialization, and handled HTTP errors use `no-store`. Dashboard GETs bypass caching so manual updates and test checks read the backend immediately. See [API usage](https://marcelopenas.github.io/HospitalSim/api).
 
-Existing databases require the [documented schema upgrade](docs/development.md#upgrading-an-existing-schema) or an intentional clean reset; `create_all` does not alter existing columns.
+Existing databases require the [documented schema upgrade](https://marcelopenas.github.io/HospitalSim/development#upgrading-an-existing-schema) or an intentional clean reset; `create_all` does not alter existing columns.
 
 `APP_STATE` is independent startup metadata. The API also enforces hospital capacity and requires assigned staff to belong to the patient’s hospital.
 
@@ -87,7 +87,7 @@ npm --prefix web run build
 uv run mkdocs build --strict
 ```
 
-MySQL integration tests are skipped unless `TEST_DATABASE_URL` points to a disposable MySQL schema ending in `_test`; **that suite drops and recreates its test tables**. Schema, ORM, and HTTP-cache tests run without a database. See [Development](docs/development.md) for setup, integration checks, and documentation publishing.
+MySQL integration tests are skipped unless `TEST_DATABASE_URL` points to a disposable MySQL schema ending in `_test`; **that suite drops and recreates its test tables**. Schema, ORM, and HTTP-cache tests run without a database. See [Development](https://marcelopenas.github.io/HospitalSim/development) for setup, integration checks, and documentation publishing.
 
 ## AI assistance
 
