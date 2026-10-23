@@ -70,3 +70,22 @@ button:disabled{opacity:.5}.brand-button{border:0;background:none;text-align:lef
 .image-editor { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
 .image-editor > div { flex: 1; min-width: 200px; }
 .image-editor input[type="file"] { max-width: 100%; }
+
+/* Persistent notification history: newest cards enter from the right. */
+.notifications { margin-bottom: 20px; min-width: 0; }
+.notification-viewport { overflow-x: auto; overflow-y: hidden; border-radius: 6px; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.notification-viewport:focus-visible { outline: 3px solid #52bda6; outline-offset: 3px; }
+.notification-track { display: flex; align-items: stretch; }
+.notification.alert { flex: 0 0 100%; min-width: 0; margin: 0; display: flex; align-items: center; gap: 16px; scroll-snap-align: start; scroll-snap-stop: always; }
+.notification p { flex: 1; overflow-wrap: anywhere; }
+.notification-close { position: relative; display: grid; place-items: center; padding: 0; flex-shrink: 0; color: inherit; width: 36px; height: 36px; }
+.notification-countdown { position: absolute; inset: 2px; width: 32px; height: 32px; fill: none; stroke: currentColor; stroke-width: 1.8; transform: rotate(-90deg); pointer-events: none; }
+.notification-countdown-track { opacity: .2; }
+.notification-countdown-progress { stroke-dasharray: 1; stroke-dashoffset: 0; animation: notification-countdown linear forwards; }
+@keyframes notification-countdown { to { stroke-dashoffset: 1; } }
+.notification-pagination { display: flex; justify-content: safe center; overflow-x: auto; padding: 4px 0; }
+.notification-dot { display: grid; place-items: center; flex: 0 0 28px; height: 28px; background: transparent; border: 0; border-radius: 50%; }
+.notification-dot span { width: 7px; height: 7px; border-radius: 50%; background: #91a4a0; }
+.notification-dot[aria-current=true] span { background: #16856f; box-shadow: 0 0 0 3px #16856f26; }
+[data-theme=dark] .notification-dot[aria-current=true] span { background: #8bd4bf; box-shadow: 0 0 0 3px #8bd4bf26; }
+@media(prefers-reduced-motion:reduce) { .notification-countdown-progress { animation-timing-function: steps(5, end); } }

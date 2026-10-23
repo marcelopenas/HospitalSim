@@ -4,6 +4,8 @@ import { applyResponse, emptyDatabase, initializationRequest, isInitialization, 
 import type { Database, Payload, Refs, Request, Resource, Row } from './api'
 import { baselineRefs, baselineProblems, fingerprint, populationPlan, testPlan, finalStateMatches } from './demo'
 import { useTheme } from './useTheme'
+import { Notifications } from './Notifications'
+import { useNotifications } from './useNotifications'
 import { avatarSource, defaultAvatar, uploadAvatar } from './patientImage'
 import './App.css'
 import './theme.css'
@@ -101,8 +103,7 @@ function App() {
   const [editor, setEditor] = useState<{ resource: Resource; row?: Row } | null>(null)
   const [prerequisite, setPrerequisite] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const [notice, setNotice] = useState('')
+  const { notify, ...notifications } = useNotifications()
   const [logs, setLogs] = useState<Log[]>([])
   const [session, setSession] = useState<TestRun | null>(null)
   const [running, setRunning] = useState(false)
@@ -127,10 +128,10 @@ function App() {
     }
   }
   async function refresh() { await runRequests(readRequests(), {}, execute); return dataRef.current }
-  async function guarded(action: () => Promise<void>) {
+  async function guarded(action: () => Promise<void>, message = 'API operation started. Waiting for the API…') {
     if (lock.current) return
-    lock.current = true; setBusy(true); setError(''); setNotice('')
-    try { await action() } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); setRunning(false) }
+    lock.current = true; setBusy(true); notify(message, 'info')
+    try { await action() } catch (cause) { notify(`${cause instanceof Error ? cause.message : String(cause)} Changes already confirmed by the API are retained. Refresh before retrying; requests are never retried automatically.`, 'error'); setRunning(false) }
     finally { lock.current = false; setBusy(false) }
   }
   async function bootstrap() {
@@ -157,7 +158,7 @@ function App() {
       await refresh()
       if (fingerprint(dataRef.current) !== expected) {
         showPopulation(dataRef.current, thenTest)
-        setNotice('Records changed since the preview. No population writes were sent; review the updated plan before confirming again.')
+        notify('Records changed since the preview. No population writes were sent; review the updated plan before confirming again.')
         return
       }
       await runRequests(plan, {}, execute)
@@ -165,7 +166,7 @@ function App() {
       if (!baselineRefs(dataRef.current)) throw new Error(`Population verification failed: ${baselineProblems(dataRef.current).join('; ')}`)
       await execute(initializationRequest(true))
       setStarted(true); setSession(null); setRunning(false); setPage(thenTest ? 'Testing' : 'Overview'); setHospital('all')
-      setNotice('Demo baseline saved to MySQL: 2 hospitals, 3 roles, 3 staff, 4 patients.')
+      notify('Demo baseline saved to MySQL: 2 hospitals, 3 roles, 3 staff, 4 patients.')
       if (thenTest) showTest(dataRef.current)
     } })
   }
@@ -193,10 +194,10 @@ function App() {
           setRunning(false)
           await refresh()
           if (!finalStateMatches(dataRef.current, session.refs)) throw new Error('All steps were sent, but final verification did not match. Inspect the database and request log before rerunning.')
-          setNotice('Test complete. The persisted final demo state was verified through the API.')
+          notify('Test complete. The persisted final demo state was verified through the API.')
         }
       } catch (cause) { setSession({ ...session, index: committed, failed: true }); throw cause }
-    })
+    }, `Test step ${session.index + 1} of ${session.requests.length} started: ${session.requests[session.index].title}`)
   }
   useEffect(() => {
     if (!running || busy || !activeTest) return
@@ -216,7 +217,7 @@ function App() {
     setReview({ title: request.title, description: request.method === 'DELETE' ? 'Delete this record from MySQL. Deletion is permanent; referenced records may be protected by the API. The collections will then reload.' : request.method === 'GET' ? 'Read this record from the API. Its JSON response appears in the request log.' : 'Save these values through the API, then reload all collections from MySQL.', requests: request.method === 'GET' ? [request] : [request, ...readRequests()], confirm: request.method === 'GET' ? 'Read record' : 'Send request', action: async () => {
       await execute(request)
       if (request.method !== 'GET') await refresh()
-      setNotice(request.method === 'GET' ? 'Record read. Open the request log to inspect its JSON response.' : 'Database updated and records reloaded.')
+      notify(request.method === 'GET' ? 'Record read. Open the request log to inspect its JSON response.' : 'Database updated and records reloaded.')
     } })
   }
   const modal = <>
@@ -224,7 +225,7 @@ function App() {
     {prerequisite && <Dialog title="Populate the baseline first" close={() => setPrerequisite(false)}><p>The test needs the exact predefined demo records and assignments. They are missing, were edited, or a previous test changed them. Populate restores the baseline before another test can run.</p><p>You will review every reset and creation request before it is sent. After population, the test preview opens for a separate confirmation.</p><div className="modal-actions"><button className="button secondary" onClick={() => setPrerequisite(false)}>Cancel</button><button className="button primary" onClick={() => { setPrerequisite(false); showPopulation(dataRef.current, true) }}>Review Populate</button></div></Dialog>}
     {editor && <Editor {...editor} data={data} close={() => setEditor(null)} save={manual}/>}
   </>
-  const messages = <>{error && <div className="alert error" role="alert">{error} Changes already confirmed by the API are retained. Refresh before retrying; requests are never retried automatically.</div>}{notice && <div className="alert success" role="status">{notice}</div>}{busy && <div className="alert" role="status">Waiting for the API…</div>}</>
+  const messages = <Notifications {...notifications}/>
   if (checking || !booted) return <div className="welcome"><div className="welcome-body"><h1>HospitalSim</h1><p>Checking the database initialization flag and loading API records. These reads do not create demo data.</p>{messages}{!checking && <button className="button primary" disabled={busy} onClick={() => { void bootstrap() }}>Retry connection</button>}<details><summary>Startup reads and illustrative SQL</summary><Preview requests={[initializationRequest(), ...readRequests()]}/></details></div></div>
   if (!started) return <div className="welcome"><div className="welcome-header"><span className="brand-mark">+</span><strong>HospitalSim</strong><a href="https://marcelopenas.github.io/HospitalSim/" target="_blank" rel="noreferrer">Documentation ↗</a><a href={swaggerUrl} target="_blank" rel="noreferrer">Swagger API ↗</a><ThemeControl {...theme}/></div><div className="welcome-body"><div className="eyebrow">HOSPITAL OPERATIONS</div><h1>How would you like to begin?</h1><p>This choice appears once per database. After you start empty or successfully populate, MySQL remembers the choice across refreshes and browsers.</p>{messages}<div className="welcome-options"><section className="panel"><Icon name="hospital" size={34}/><h2>Start empty</h2><p>Build your own hospitals, roles, staff, and patient records manually. Existing database records, if any, are kept.</p><button className="button secondary" disabled={busy} onClick={() => start(false)}>Start without adding demo data</button></section><section className="panel"><Icon name="pulse" size={34}/><h2>Pre-populate</h2><p>Review and create a fixed demo dataset, then run a predetermined sequence of real API operations in Testing.</p><button className="button primary" disabled={busy} onClick={() => start(true)}>Review demo population</button></section></div><details><summary>Startup reads and illustrative SQL</summary><Preview requests={[initializationRequest(), ...readRequests()]}/></details></div>{modal}</div>
   const rows = page === 'patients' ? selected(data.patients) : page === 'staff' ? selected(data.staff) : page === 'hospitals' ? data.hospitals.filter(row => hospital === 'all' || row.id === Number(hospital)) : page === 'roles' ? data.roles : []
@@ -248,7 +249,7 @@ function App() {
     ].map(metric => <article className="metric-card" key={metric.label}><div className="metric-label">{metric.label}<span className={`metric-icon ${metric.color}`}><Icon name={metric.icon}/></span></div><div className="metric-value">{metric.value}</div><div className="metric-detail">{metric.detail}</div></article>)}</section><div className="charts-grid"><section className="panel"><div className="panel-header"><div><h2>Care assignments</h2><p>Patient records grouped by assigned staff</p></div></div><div className="ward-list">{staff.map(row => { const count = patients.filter(p => p.staff_id === row.id).length; return <div key={row.id}><div className="ward-label"><strong>{nameOf(row)}</strong><span>{count} patient{count === 1 ? '' : 's'}</span></div><div className="track"><div style={{ width: `${patients.length ? count / patients.length * 100 : 0}%` }}/></div></div> })}{!staff.length && <p className="muted">Create a hospital and staff, or pre-populate from Testing.</p>}</div></section><section className="panel briefing"><h2>Testing workspace</h2><p>Populate a fixed baseline, inspect the HTTP and SQL previews, then run eight predetermined operations against MySQL.</p><button className="button primary" onClick={() => setPage('Testing')}>Open Testing →</button><p className="muted">Counts reflect the last successful API responses. Use Refresh below to load changes made by other clients.</p></section></div><section className="panel"><div className="panel-header"><div><h2>Patient registry</h2><p>Current records returned by the API</p></div><button className="text-button" onClick={() => setPage('patients')}>Manage patients →</button></div><Table resource="patients" records={patients.slice(-5)} editable={false}/></section></>}
     {page !== 'Overview' && page !== 'Testing' && <section className="panel"><div className="panel-header"><div><h2>{labels[page]} <span className="count-tag">{filtered.length}</span></h2><p>Create, read, update, and delete real records.</p></div><button className="button primary" disabled={busy || activeTest || ((page === 'staff' || page === 'patients') && !data.hospitals.length)} onClick={() => setEditor({ resource: page })}>+ Create record</button></div><div className="table-toolbar"><label className="search"><Icon name="search" size={17}/><input aria-label="Search records" placeholder="Search the loaded records…" value={query} onChange={event => setQuery(event.target.value)}/></label>{(page === 'staff' || page === 'patients') && !data.hospitals.length && <p className="muted">Create a hospital first.</p>}{activeTest && <p className="muted">End the test session before editing records manually.</p>}</div><Table resource={page} records={filtered}/></section>}
     {page === 'Testing' && <><div className="testing-actions"><section className="panel briefing"><span className="badge teal">1 · BASELINE</span><h2>Populate</h2><p>Create or restore 2 demo hospitals, 3 roles, 3 staff, and 4 patients with fixed names, dates, and assignments.</p><p>The two reserved [Demo] hospitals are reset. Their patient and staff records are recreated; unrelated hospitals are preserved.</p><button className="button secondary" disabled={busy || activeTest} onClick={() => showPopulation()}>Populate</button></section><section className="panel briefing"><span className="badge blue">2 · PREDETERMINED OPERATIONS</span><h2>Test</h2><p>Run the same eight hourly operations every time. The final demo dataset has 5 patients: 4 assigned and 1 unassigned.</p><p>{refs ? 'The loaded data matches the required baseline.' : 'Populate is required: the loaded data does not match the baseline.'} The API checks are repeated before execution.</p><button className="button primary" disabled={busy || activeTest} onClick={() => showTest()}>Test</button></section></div><section className="panel briefing"><h2>What will happen?</h2><p>08:00–15:00: two admissions, one clinician assignment, one hospital transfer, one discharge (DELETE), one unassignment, one added staff role, and one hospital location update. Actual server IDs are resolved from Populate responses. Auto-increment IDs can differ between runs; the resulting demo values and relationships are fixed.</p><p>Each request is committed independently. Pause waits for any in-flight request to finish. End session leaves completed changes in the database. A failed request stops the sequence, without retrying or rolling back earlier steps. Populate restores the starting state for another run.</p><h3>Requests and database changes</h3><Preview requests={testPlan().map(request => refs ? resolveRequest(request, refs) : request)}/></section></>}
-    <section className="panel briefing connection"><div className="connection-heading"><h2>API reads and request log</h2><button className="button secondary" disabled={busy || activeTest} onClick={() => setReview({ title: 'Refresh API records', description: 'Read all four collections from MySQL. No database changes are made.', requests: readRequests(), confirm: 'Refresh records', action: async () => { await refresh(); setNotice('Records refreshed from the API.') } })}>Refresh records</button></div><p>API endpoint: <code>{apiBase}</code>. Search and hospital filters operate on these loaded records and send no requests.</p><details><summary>Refresh request and SQL previews</summary><Preview requests={readRequests()}/></details><SqlNote/><div className="request-log">{logs.slice(0, 30).map((entry, index) => <details key={index}><summary><span className={entry.status === 'Failed' ? 'danger' : ''}>{entry.status}</span> · {entry.request.method} {pathOf(entry.request)} · {entry.request.title}</summary>{entry.detail && <pre>{entry.detail}</pre>}<Preview requests={[entry.request]} expanded/></details>)}</div></section>
+    <section className="panel briefing connection"><div className="connection-heading"><h2>API reads and request log</h2><button className="button secondary" disabled={busy || activeTest} onClick={() => setReview({ title: 'Refresh API records', description: 'Read all four collections from MySQL. No database changes are made.', requests: readRequests(), confirm: 'Refresh records', action: async () => { await refresh(); notify('Records refreshed from the API.') } })}>Refresh records</button></div><p>API endpoint: <code>{apiBase}</code>. Search and hospital filters operate on these loaded records and send no requests.</p><details><summary>Refresh request and SQL previews</summary><Preview requests={readRequests()}/></details><SqlNote/><div className="request-log">{logs.slice(0, 30).map((entry, index) => <details key={index}><summary><span className={entry.status === 'Failed' ? 'danger' : ''}>{entry.status}</span> · {entry.request.method} {pathOf(entry.request)} · {entry.request.title}</summary>{entry.detail && <pre>{entry.detail}</pre>}<Preview requests={[entry.request]} expanded/></details>)}</div></section>
     <footer className="page-footer"><span>HospitalSim · FastAPI + MySQL</span><span>Demo SQL is illustrative. The browser sends HTTP and JSON.</span></footer></main></div>{modal}</div>
 }
 export default App
