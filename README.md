@@ -1,4 +1,4 @@
-# HospitalSim <img src="web/public/favicon.svg" align="right" width="125" alt="HospitalSim logo">
+# HospitalSim <img src="web/public/favicon.svg" align="right" width="120" alt="HospitalSim logo">
 
 A no-login hospital dashboard backed by FastAPI and MySQL. Manage hospitals, roles, staff, and patients manually, or run a predefined sequence of real API operations.
 
