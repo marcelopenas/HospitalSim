@@ -35,8 +35,6 @@ Gold keys identify primary-key columns; blue diamonds identify foreign keys. Fil
 
 `NUMERIC(12,2)` is stored as MySQL `DECIMAL(12,2)`, and MySQL represents boolean values as `TINYINT(1)`. Capacity limits and the same-hospital clinician rule are enforced by the API; the diagram shows the structural relationships.
 
-![HospitalSim relational model in MySQL Workbench UI, with all some tables omitted](../assets/err-diagram.svg)
-
 ## Application metadata
 
 `app_state` is separate from the domain model. Row 1 stores the boolean `was_initialized` flag used by `/initialization` to remember the startup choice across browsers and restarts. A missing row means false. Startup table creation adds this new table to an existing database without altering domain records.

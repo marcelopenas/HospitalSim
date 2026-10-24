@@ -17,6 +17,7 @@
 | `tests/` | Schema, ORM, HTTP-cache, and optional MySQL integration tests |
 | `docs/` / `mkdocs.yml` | Documentation source and navigation |
 | `compose.yml` | API, frontend, and MySQL services |
+| `compose.test.yml` / `test.sh` | Isolated MySQL container and complete backend test runner |
 
 ## Frontend checks
 
@@ -49,6 +50,23 @@ uv export --format requirements-txt --no-dev --no-emit-project --output-file req
 Commit `pyproject.toml`, `uv.lock`, and `requirements.txt` together. Docker installs the exported requirements; uv development uses the lockfile. PyMySQL includes its RSA extra for MySQL password authentication. The declared Python version is 3.14+.
 
 ## Backend validation
+
+To run the complete backend suite against a fresh MySQL 8.4 container, install Docker Engine/Desktop and Compose v2, start Docker, then run from the repository root:
+
+```bash
+bash test.sh
+```
+
+The runner builds the existing API Dockerfile, mounts the tests read-only, waits for MySQL's health check, and executes unittest discovery with `TEST_DATABASE_URL` set to `hospitalsim_test`. No host Python, uv, or `.env` is required. Each invocation uses a unique Compose project with no published ports and temporary MySQL storage. Its test containers and network are removed on completion, failure, or interruption; all test data is discarded. The application stack and its `db-data` volume are separate. Docker retains reusable images and build cache. The command returns the test process's exit status; setup or cleanup failures also return a nonzero status.
+
+For local checks without a database:
+
+```bash
+uv sync --locked
+uv run python -m unittest discover -s tests -v
+```
+
+The database integration tests are skipped when `TEST_DATABASE_URL` is unset. To use an existing disposable MySQL instance instead of the container runner, follow the setup below.
 
 Start an accessible MySQL database, export `DATABASE_URL`, and run the service. Use Swagger to exercise create/list/read/patch/delete for all four resources, including missing IDs, duplicate names, invalid dates, invalid references, and same-hospital staff assignment. Verify records persist across a service restart. Create an empty, disposable MySQL schema such as `hospitalsim_test`, with a user permitted to create and drop its tables. Run the API integration suite with:
 

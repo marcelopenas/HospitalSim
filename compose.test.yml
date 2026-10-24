@@ -1,0 +1,33 @@
+# Standalone test stack; do not merge with compose.yml.
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: local-test-root
+      MYSQL_DATABASE: hospitalsim_test
+      MYSQL_USER: hospitalsim_test
+      MYSQL_PASSWORD: local-test-password
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: mysql+pymysql://hospitalsim_test:local-test-password@db:3306/hospitalsim_test
+      TEST_DATABASE_URL: mysql+pymysql://hospitalsim_test:local-test-password@db:3306/hospitalsim_test
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./tests:/code/tests:ro
+    command: ["python", "-m", "unittest", "discover", "-s", "tests", "-v"]
+    depends_on:
+      db:
+        condition: service_healthy

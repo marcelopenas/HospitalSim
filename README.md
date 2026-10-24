@@ -72,21 +72,51 @@ Existing databases require the [documented schema upgrade](https://marcelopenas.
 
 ## Checks and documentation
 
-For development checks, install Python 3.14+, uv, and Node 24, then run from the repository root:
+### All backend tests with a disposable MySQL container
+
+Requires a running Docker Engine/Desktop and Compose v2. From the repository root:
+
+```bash
+bash test.sh
+```
+
+The command builds the API test image, starts a fresh MySQL 8.4 container, waits for its health check, and runs the complete Python suite, including the MySQL integration tests. It returns a nonzero exit status if tests or setup fail. Host Python, uv, and `.env` are not required for this command.
+
+Each run uses a separate Compose project, an internal network with no published ports, and a temporary `hospitalsim_test` database. The database container, test container, and network are removed on completion, failure, or interruption. Test data is deliberately discarded. The application's running services and `db-data` volume are separate. Docker's reusable build images/cache remain available for later runs.
+
+### Local backend tests, linters, and documentation
+
+Install Python 3.14+ and uv, then run from the repository root:
 
 ```bash
 uv sync --locked
 uv tool run ruff check .
 uv tool run ty check --python .venv/bin/python .
 uv run python -m unittest discover -s tests -v
+uv run mkdocs build --strict
+```
+
+Without `TEST_DATABASE_URL`, the MySQL integration tests are skipped; schema, ORM, HTTP-response, and cache-policy tests still run. To use an existing disposable MySQL schema instead of the container runner:
+
+```bash
+TEST_DATABASE_URL='mysql+pymysql://TEST_USER:TEST_PASSWORD@localhost:3306/hospitalsim_test' \
+  uv run python -m unittest discover -s tests -v
+```
+
+**The integration suite drops and recreates its tables.** The connection must use `mysql+pymysql` and a database name ending in `_test`. Use only a disposable schema.
+
+### Frontend tests and checks
+
+Install Node 24, then run from the repository root:
+
+```bash
 npm --prefix web ci
 npm --prefix web test
 npm --prefix web run lint
 npm --prefix web run build
-uv run mkdocs build --strict
 ```
 
-MySQL integration tests are skipped unless `TEST_DATABASE_URL` points to a disposable MySQL schema ending in `_test`; **that suite drops and recreates its test tables**. Schema, ORM, and HTTP-cache tests run without a database. See [Development](https://marcelopenas.github.io/HospitalSim/development) for setup, integration checks, and documentation publishing.
+Frontend tests check the API client and deterministic workflows using a mock HTTP contract. `bash test.sh` exercises the backend with real MySQL. See [Development](docs/development.md) for coverage and documentation publishing.
 
 ## AI assistance
 
