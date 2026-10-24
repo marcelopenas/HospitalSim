@@ -22,9 +22,9 @@ export function useNotifications() {
     const timers = items.flatMap(({ id, expiresAt }) => expiresAt === undefined ? [] : [window.setTimeout(() => dismiss(id), Math.max(0, expiresAt - Date.now()))])
     return () => timers.forEach(timer => window.clearTimeout(timer))
   }, [items, dismiss])
-  function select(id: number | null) {
-    setState(current => ({ ...current, activeId: id }))
-  }
+  const select = useCallback((id: number | null) => {
+    setState(current => current.activeId === id ? current : { ...current, activeId: id })
+  }, [])
   return { items, activeId, notify, dismiss, select }
 }
 

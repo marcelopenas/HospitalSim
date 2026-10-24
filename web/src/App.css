@@ -73,7 +73,8 @@ button:disabled{opacity:.5}.brand-button{border:0;background:none;text-align:lef
 
 /* Persistent notification history: newest cards enter from the right. */
 .notifications { margin-bottom: 20px; min-width: 0; }
-.notification-viewport { overflow-x: auto; overflow-y: hidden; border-radius: 6px; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.notification-viewport { overflow-x: auto; overflow-y: hidden; border-radius: 6px; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+.notification-viewport::-webkit-scrollbar,.notification-pagination::-webkit-scrollbar { display: none; }
 .notification-viewport:focus-visible { outline: 3px solid #52bda6; outline-offset: 3px; }
 .notification-track { display: flex; align-items: stretch; }
 .notification.alert { flex: 0 0 100%; min-width: 0; margin: 0; display: flex; align-items: center; gap: 16px; scroll-snap-align: start; scroll-snap-stop: always; }
@@ -83,7 +84,7 @@ button:disabled{opacity:.5}.brand-button{border:0;background:none;text-align:lef
 .notification-countdown-track { opacity: .2; }
 .notification-countdown-progress { stroke-dasharray: 1; stroke-dashoffset: 0; animation: notification-countdown linear forwards; }
 @keyframes notification-countdown { to { stroke-dashoffset: 1; } }
-.notification-pagination { display: flex; justify-content: safe center; overflow-x: auto; padding: 4px 0; }
+.notification-pagination { position: relative; display: flex; justify-content: safe center; overflow-x: auto; padding: 4px 0; scrollbar-width: none; touch-action: pan-y; }
 .notification-dot { display: grid; place-items: center; flex: 0 0 28px; height: 28px; background: transparent; border: 0; border-radius: 50%; }
 .notification-dot span { width: 7px; height: 7px; border-radius: 50%; background: #91a4a0; }
 .notification-dot[aria-current=true] span { background: #16856f; box-shadow: 0 0 0 3px #16856f26; }

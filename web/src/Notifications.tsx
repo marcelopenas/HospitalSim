@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { progressNotificationDuration } from './useNotifications'
 import type { useNotifications } from './useNotifications'
 
@@ -10,9 +10,16 @@ function CountdownRing({ expiresAt }: { expiresAt: number }) {
 
 export function Notifications({ items, activeId, dismiss, select }: Omit<ReturnType<typeof useNotifications>, 'notify'>) {
   const viewport = useRef<HTMLDivElement>(null)
+  const pagination = useRef<HTMLElement>(null)
+  const dotTouch = useRef<{ x: number; y: number } | null>(null)
+  const wheel = useRef({ distance: 0, lastEvent: 0, lastSwitch: 0 })
   const previousCount = useRef(items.length)
   const index = Math.max(0, items.findIndex(item => item.id === activeId))
   const active = items[index]
+  const move = useCallback((offset: number) => {
+    const item = items[index + offset]
+    if (item) select(item.id)
+  }, [items, index, select])
   useLayoutEffect(() => {
     const element = viewport.current
     if (!element) return
@@ -20,19 +27,37 @@ export function Notifications({ items, activeId, dismiss, select }: Omit<ReturnT
     const instant = items.length < previousCount.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let width = element.clientWidth
     element.scrollTo({ left: index * width, behavior: instant ? 'instant' : 'smooth' })
+    const dots = pagination.current
+    const selectedDot = dots?.querySelector<HTMLElement>('[aria-current=true]')
+    if (dots && selectedDot) dots.scrollTo({ left: selectedDot.offsetLeft - (dots.clientWidth - selectedDot.clientWidth) / 2, behavior: instant ? 'instant' : 'smooth' })
     previousCount.current = items.length
+    function scrollDots(event: WheelEvent) {
+      if (event.ctrlKey) return
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
+      if (!delta) return
+      const offset = delta > 0 ? 1 : -1
+      if (!items[index + offset]) return
+      event.preventDefault()
+      const now = performance.now()
+      const gesture = wheel.current
+      if (now - gesture.lastEvent > 180 || Math.sign(gesture.distance) !== offset) gesture.distance = 0
+      gesture.lastEvent = now
+      gesture.distance += delta * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? width : 1)
+      if (Math.abs(gesture.distance) >= 30 && now - gesture.lastSwitch >= 300) {
+        gesture.distance = 0
+        gesture.lastSwitch = now
+        move(offset)
+      }
+    }
+    dots?.addEventListener('wheel', scrollDots, { passive: false })
     const observer = new ResizeObserver(() => {
       if (element.clientWidth === width) return
       width = element.clientWidth
       element.scrollTo({ left: index * width, behavior: 'instant' })
     })
     observer.observe(element)
-    return () => observer.disconnect()
-  }, [items.length, index])
-  function move(offset: number) {
-    const item = items[index + offset]
-    if (item) select(item.id)
-  }
+    return () => { observer.disconnect(); dots?.removeEventListener('wheel', scrollDots) }
+  }, [items, index, move])
   if (!active) return null
   return <section className="notifications" aria-label="Notifications" onKeyDown={event => {
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -54,6 +79,13 @@ export function Notifications({ items, activeId, dismiss, select }: Omit<ReturnT
         </div>)}
       </div>
     </div>
-    <nav className="notification-pagination" aria-label="Notification history">{items.map((item, position) => <button type="button" key={item.id} className="notification-dot" aria-current={item.id === active.id ? 'true' : undefined} aria-label={`Notification ${position + 1} of ${items.length}: ${item.message}`} title={item.message} onClick={() => select(item.id)}><span/></button>)}</nav>
+    <nav ref={pagination} className="notification-pagination" aria-label="Notification history" onTouchStart={event => { dotTouch.current = { x: event.touches[0].clientX, y: event.touches[0].clientY } }} onTouchEnd={event => {
+      const start = dotTouch.current
+      dotTouch.current = null
+      if (!start) return
+      const x = start.x - event.changedTouches[0].clientX
+      const y = start.y - event.changedTouches[0].clientY
+      if (Math.abs(x) > 40 && Math.abs(x) > Math.abs(y)) move(x > 0 ? 1 : -1)
+    }} onTouchCancel={() => { dotTouch.current = null }}>{items.map((item, position) => <button type="button" key={item.id} className="notification-dot" aria-current={item.id === active.id ? 'true' : undefined} aria-label={`Notification ${position + 1} of ${items.length}: ${item.message}`} title={item.message} onClick={() => select(item.id)}><span/></button>)}</nav>
   </section>
 }

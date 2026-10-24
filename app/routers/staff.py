@@ -47,7 +47,7 @@ def validate_references(
 
 
 def to_read(staff: Staff) -> StaffRead:
-    assert staff.id is not None, "Staff ID cannot be None for read models" 
+    assert staff.id is not None, "Staff ID cannot be None for read models"
 
     return StaffRead(
         id=staff.id,
