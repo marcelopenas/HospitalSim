@@ -1,12 +1,10 @@
 # Dashboard and Testing
 
-The English dashboard opens without authentication. Its data comes from the FastAPI CRUD API and persists in MySQL. Documentation and Swagger links remain in the top navigation.
+The dashboard opens without authentication. Its data comes from the FastAPI CRUD API and persists in MySQL. Documentation and Swagger links remain in the top navigation.
 
 ## Sidebar and appearance
 
 Clicking a sidebar destination, including the current one or the HospitalSim brand, scrolls to the top. The connection box is anchored at the bottom of the desktop sidebar and includes the MySQL/FastAPI and no-login details. Below it, a non-clickable local profile shows **No login required** and the visible **Dark mode** switch.
-
-The default theme follows the browser/operating system, including changes while the page is open. The switch reflects the active theme. Toggling Dark mode saves a manual preference in this browser, overriding automatic appearance; there is no separate browser-theme button. Only this display preference uses local storage, not domain records. If storage is unavailable, the toggle still works for the current visit. The controls remain visible on smaller screens below navigation and are also available on the welcome header.
 
 ## First visit
 
@@ -56,7 +54,7 @@ Test requires an exact match to the baseline, including staff roles, patient ass
 
 Before running, review:
 
-1. The plain-English story and expected final state.
+1. The simulated story and expected final state.
 2. The ordered HTTP requests and payloads.
 3. The illustrative SQL reads and writes, including join-table changes.
 
@@ -93,9 +91,3 @@ The timer and cursor are page-session state. Closing or reloading the page stops
 - **Patients:** the default profile is visible before saving. Upload a custom PNG/JPEG/WebP or use the default. The browser prepares a 256 × 256 JPEG from uploads and sends base64 JSON; the backend stores decoded bytes in a MySQL BLOB. Existing images stay unchanged unless replaced/reset. Demo patients have different coloured backgrounds.
 
 Create/update previews include these values and illustrate BLOB writes with `FROM_BASE64`. SQL is a demo example only; the browser sends HTTP and JSON, never SQL. Salary, image, and date validation errors are returned by the API before any record change is committed.
-
-## Closing manual forms
-
-Click the backdrop outside a dialog to perform the same action as its Cancel/close button. Clicking inside the dialog, including its padding, does not dismiss it. Escape also uses the same close handler. Existing required-action or busy-state guards remain in effect; dismissal never confirms a request. Unsaved manual changes are discarded exactly as with Cancel.
-
-Create/edit forms initially keep the API request and SQL preview cards collapsed. Expand a card to inspect the payload and illustrative SQL before choosing **Review request**. The confirmation dialog remains a separate step before any HTTP write is sent.

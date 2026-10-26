@@ -1,6 +1,6 @@
 # HospitalSim
 
-HospitalSim is a no-login dashboard for a FastAPI CRUD API backed by MySQL. Manual forms, deterministic population, Testing, and Swagger all operate on the same records. Hospitals have patient capacity limits; staff records include admission dates, check-in times, and exact salaries; roles carry access classifications; patients show default or uploaded profile images.
+HospitalSim is a hospital management system built with a React dashboard and a FastAPI CRUD API backed by MySQL. Manual forms, deterministic population, Testing, and Swagger all operate on the same records. Hospitals have patient capacity limits; staff records include admission dates, check-in times, and exact salaries; roles carry access classifications; patients show default or uploaded profile images.
 
 [Getting started](getting-started.md){ .md-button }
 [Local dashboard](http://localhost:3000){ .md-button }
@@ -11,14 +11,14 @@ HospitalSim is a no-login dashboard for a FastAPI CRUD API backed by MySQL. Manu
 ## Start here
 
 1. Launch the stack with [Getting started](getting-started.md). A new database starts empty.
-2. On the first startup, choose **Start empty** to add records manually or **Pre-populate** to review the fixed demo baseline. MySQL remembers the completed choice, so refreshes open the dashboard directly.
+2. On the first startup, choose **Start empty** to add records manually or **Pre-populate** to review the fixed demo baseline.
 3. Use the [Dashboard guide](dashboard.md) for CRUD forms, SQL previews, and the Testing sequence.
 4. Explore [API usage](api/index.md), the [Data model](models/index.md), and [Architecture](architecture.md).
 5. See [Development](development.md) for checks and [Troubleshooting](troubleshooting.md) for connection and validation errors.
 
-## Showcases
+## Showcase
 
-Watch the [current Overview tour](vid/index.md), built from the supplied dashboard screenshot, or follow [Recording and rebuilding](vid/recording.md) to capture live CRUD and Testing workflows.
+Watch the [current Overview tour](vid/index.md), or follow [Recording and rebuilding](vid/recording.md) to capture live CRUD and Testing workflows.
 
 ## Actual database operations
 

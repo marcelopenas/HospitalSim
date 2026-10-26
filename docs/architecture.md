@@ -10,7 +10,7 @@ The dashboard, Testing tab, and Swagger all use one FastAPI CRUD API and one MyS
 | Frontend server | Nginx in Compose; Vite locally | Serve assets and proxy `/api/*` to FastAPI |
 | API | FastAPI, SQLModel | Validate requests and execute CRUD transactions |
 | Database | MySQL 8.4 | Persist hospitals, roles, staff, patients, and staff-role links |
-| Documentation | MkDocs Material | English guides and API/model reference |
+| Documentation | MkDocs Material | Guides and API/model reference |
 
 ## Request path
 

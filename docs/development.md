@@ -95,7 +95,7 @@ uv run mkdocs serve --dev-addr 127.0.0.1:8000
 uv run mkdocs build --strict
 ```
 
-The explicit port avoids conflicting with API development conventions. Markdown sources are English. Navigation is declared in `mkdocs.yml`; add new pages there. Mermaid diagrams are supported through the configured SuperFences extension.
+The explicit port avoids conflicting with API development conventions. Navigation is declared in `mkdocs.yml`; add new pages there. Mermaid diagrams are supported through the configured SuperFences extension.
 
 The GitHub Actions workflow builds and publishes on pushes to `main`. Configure GitHub Pages to serve `gh-pages`; the site URL is `https://marcelopenas.github.io/HospitalSim/`. Local edits or a source archive do not publish a documentation update automatically.
 

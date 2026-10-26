@@ -1,6 +1,6 @@
 # HospitalSim dashboard
 
-An English React/TypeScript dashboard for the FastAPI CRUD API and MySQL. There is no login or browser-local data fallback.
+An React/TypeScript dashboard for the FastAPI CRUD API and MySQL. There is no login or browser-local data fallback.
 
 ## Run
 

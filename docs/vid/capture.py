@@ -549,7 +549,7 @@ async def capture(url: str, destination: Path, headed: bool) -> None:
                 await page.get_by_role("button", name="Test", exact=True).click()
                 await recorder.shot(
                     "test-story",
-                    "Before the test runs, review the plain-English story, eight operations, and expected final state.",
+                    "Before the test runs, review the plain story, eight operations, and expected final state.",
                     7,
                 )
                 await recorder.expand(6)
