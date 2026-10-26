@@ -55,11 +55,3 @@ Use Node 24 and Python 3.14+. Reinstall with `npm ci` and `uv sync --locked`. Ru
 ## Data disappears after run.sh
 
 This is deliberate: `run.sh` exports dependencies, executes `docker compose down -v`, and starts a clean instance. That deletes project volumes and all MySQL records. Use `docker compose down` and `docker compose up --build` without `-v` to preserve data. The next visit offers Start empty or a separately confirmed pre-population.
-
-## Population reports a baseline mismatch
-
-Rebuild both backend and frontend with `docker compose up --build`. An earlier ORM mapping incorrectly inferred a single staff member on the reverse role relationship: assigning the Physician role to Mia removed it from Olivia. The relationship is now explicitly a collection, and the regression test covers that case. Review Populate once to restore the demo baseline. If verification fails again, the message now identifies expected and returned records, including role IDs.
-
-## Welcome appears after refresh
-
-The current version stores the choice in MySQL through `/initialization`, rather than browser memory. Rebuild the backend so this route and the new `app_state` table are available. The welcome remains until Start empty is confirmed or initial population succeeds. A deliberate database reset clears the flag. Deleting domain records alone does not bring back the welcome screen.
