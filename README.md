@@ -13,6 +13,8 @@ A no-login hospital dashboard backed by FastAPI and MySQL. Manage hospitals, rol
 
 [Watch the current Overview tour](https://marcelopenas.github.io/HospitalSim/vid/) · [Data model and relational diagram](https://marcelopenas.github.io/HospitalSim/models) · [API usage](https://marcelopenas.github.io/HospitalSim/api)
 
+![Video Demo](https://github.com/marcelopenas/HospitalSimVideo/blob/main/demo.mp4)
+
 ## Start with Docker
 
 Requires Docker Engine/Desktop and Compose v2.
